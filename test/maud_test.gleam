@@ -1,5 +1,7 @@
 //// Tests for the maud public API: render_markdown and render_document.
 
+import gleam/list
+import gleam/string
 import gleeunit
 import lustre/element
 import maud
@@ -27,13 +29,15 @@ fn extended_options() -> Options {
 /// Render markdown with default options and default components, return HTML string.
 fn render(markdown: String) -> String {
   maud.render_markdown(markdown, default_options(), components.default())
-  |> element.to_string()
+  |> list.map(element.to_string)
+  |> string.concat()
 }
 
 /// Render markdown with custom options and default components, return HTML string.
 fn render_with_options(markdown: String, options: Options) -> String {
   maud.render_markdown(markdown, options, components.default())
-  |> element.to_string()
+  |> list.map(element.to_string)
+  |> string.concat()
 }
 
 // --- Paragraph tests ---
@@ -262,7 +266,8 @@ pub fn render_markdown_with_custom_component_test() {
 
   let result =
     maud.render_markdown("Hello", default_options(), custom_components)
-    |> element.to_string()
+    |> list.map(element.to_string)
+    |> string.concat()
   assert result == "<div>Hello</div>"
 }
 
@@ -274,7 +279,8 @@ pub fn render_document_with_parsed_document_test() {
     |> mork.parse_with_options("# Title")
   let result =
     maud.render_document(document, components.default())
-    |> element.to_string()
+    |> list.map(element.to_string)
+    |> string.concat()
   assert result == "<h1>Title</h1>"
 }
 

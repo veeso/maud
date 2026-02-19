@@ -3,23 +3,80 @@
 [![Package Version](https://img.shields.io/hexpm/v/maud)](https://hex.pm/packages/maud)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/maud/)
 
+An MDX-inspired Markdown renderer for [Lustre](https://hexdocs.pm/lustre/) and Gleam.
+Maud turns Markdown text into a Lustre component tree, giving you full control over
+how each Markdown construct is rendered.
+
+Maud requires [lustre](https://hexdocs.pm/lustre/) and [mork](https://hexdocs.pm/mork/)
+as peer dependencies:
+
 ```sh
 gleam add maud@1
+gleam add lustre@4
+gleam add mork@1
 ```
+
+## Quick start
+
+Render Markdown to Lustre elements with the default HTML components:
 
 ```gleam
 import maud
+import maud/components
+import mork/document
 
-pub fn main() -> Nil {
-  // TODO: An example of the project in use
+pub fn main() {
+  let html =
+    maud.render_markdown(
+      "# Hello, world!\n\nThis is **maud**.",
+      document.default_options(),
+      components.default(),
+    )
+  // `html` is a `lustre/element.Element(a)` ready to use in your Lustre app
 }
 ```
+
+## Custom components
+
+Override individual components to apply your own styling via piping:
+
+```gleam
+import lustre/attribute
+import lustre/element/html
+import maud
+import maud/components
+import mork/document
+
+pub fn main() {
+  let my_components =
+    components.default()
+    |> components.h1(fn(children) {
+      html.h1([attribute.class("text-4xl font-bold")], children)
+    })
+    |> components.p(fn(children) {
+      html.p([attribute.class("leading-relaxed")], children)
+    })
+
+  let html =
+    maud.render_markdown(
+      "# Styled heading\n\nStyled paragraph.",
+      document.default_options(),
+      my_components,
+    )
+}
+```
+
+Every Markdown construct has a matching setter on `Components` (`a`, `blockquote`, `code`,
+`del`, `h1`–`h6`, `hr`, `i`, `img`, `li`, `mark`, `ol`, `p`, `pre`, `span`, `strong`,
+`table`, `td`, `th`, `tr`, `u`, `ul`), so you can customize exactly what you need while
+keeping the defaults for everything else.
 
 Further documentation can be found at <https://hexdocs.pm/maud>.
 
 ## Development
 
 ```sh
-gleam run   # Run the project
-gleam test  # Run the tests
+gleam build   # Build the project
+gleam test    # Run the tests
+gleam format  # Format source files
 ```
