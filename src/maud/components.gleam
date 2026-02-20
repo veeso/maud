@@ -44,7 +44,7 @@ pub type Components(a) {
     h5: fn(List(Element(a))) -> Element(a),
     h6: fn(List(Element(a))) -> Element(a),
     hr: fn(List(Element(a))) -> Element(a),
-    img: fn(List(Element(a))) -> Element(a),
+    img: fn(String, Option(String), List(Element(a))) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
     mark: fn(List(Element(a))) -> Element(a),
     ol: fn(List(Element(a))) -> Element(a),
@@ -89,7 +89,13 @@ pub fn default() -> Components(a) {
     h5: default_view(html.h5),
     h6: default_view(html.h6),
     hr: fn(_) { html.hr([]) },
-    img: fn(_) { html.img([]) },
+    img: fn(uri, alt, _children) {
+      case alt {
+        Some(alt_text) ->
+          html.img([attribute.src(uri), attribute.alt(alt_text)])
+        None -> html.img([attribute.src(uri)])
+      }
+    },
     li: default_view(html.li),
     mark: default_view(html.mark),
     ol: default_view(html.ol),
@@ -253,9 +259,12 @@ pub fn hr(
 }
 
 /// Set the `img` component used for images.
+///
+/// The first argument is the image URI, the second is an optional alt text,
+/// and the third is the list of children elements.
 pub fn img(
   components: Components(a),
-  img: fn(List(Element(a))) -> Element(a),
+  img: fn(String, Option(String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, img: img)
 }

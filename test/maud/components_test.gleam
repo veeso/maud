@@ -26,7 +26,7 @@ pub fn default_returns_components_test() {
   let _ = c.code(option.None, children)
   let _ = c.del(children)
   let _ = c.em(children)
-  let _ = c.img(children)
+  let _ = c.img("https://example.com/img.png", option.None, children)
   let _ = c.li(children)
   let _ = c.mark(children)
   let _ = c.ol(children)
@@ -202,10 +202,19 @@ pub fn default_hr_produces_html_test() {
   assert element.to_string(result) == "<hr>"
 }
 
-pub fn default_img_produces_html_test() {
+pub fn default_img_produces_html_without_alt_test() {
   let c = components.default()
-  let result = c.img([])
-  assert element.to_string(result) == "<img>"
+  let result = c.img("https://example.com/img.png", option.None, [])
+  assert element.to_string(result)
+    == "<img src=\"https://example.com/img.png\">"
+}
+
+pub fn default_img_produces_html_with_alt_test() {
+  let c = components.default()
+  let result =
+    c.img("https://example.com/img.png", option.Some("An example image"), [])
+  assert element.to_string(result)
+    == "<img src=\"https://example.com/img.png\" alt=\"An example image\">"
 }
 
 // --- Setter function tests ---
@@ -324,9 +333,12 @@ pub fn em_setter_overrides_default_test() {
 pub fn img_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.img(fn(_children) { html.img([attribute.class("image")]) })
-  let result = c.img([])
-  assert element.to_string(result) == "<img class=\"image\">"
+    |> components.img(fn(uri, _alt, _children) {
+      html.img([attribute.src(uri), attribute.class("image")])
+    })
+  let result = c.img("https://example.com/img.png", option.None, [])
+  assert element.to_string(result)
+    == "<img src=\"https://example.com/img.png\" class=\"image\">"
 }
 
 pub fn li_setter_overrides_default_test() {
