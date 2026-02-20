@@ -1,5 +1,6 @@
 //// Tests for the maud/components module: default components and setter functions.
 
+import gleam/option
 import lustre/attribute
 import lustre/element
 import lustre/element/html
@@ -22,9 +23,9 @@ pub fn default_returns_components_test() {
   let _ = c.h6(children)
   let _ = c.a(children)
   let _ = c.blockquote(children)
-  let _ = c.code(children)
+  let _ = c.code(option.None, children)
   let _ = c.del(children)
-  let _ = c.i(children)
+  let _ = c.em(children)
   let _ = c.img(children)
   let _ = c.li(children)
   let _ = c.mark(children)
@@ -98,10 +99,10 @@ pub fn default_strong_produces_html_test() {
   assert element.to_string(result) == "<strong>bold</strong>"
 }
 
-pub fn default_i_produces_html_test() {
+pub fn default_em_produces_html_test() {
   let c = components.default()
-  let result = c.i([element.text("italic")])
-  assert element.to_string(result) == "<i>italic</i>"
+  let result = c.em([element.text("italic")])
+  assert element.to_string(result) == "<em>italic</em>"
 }
 
 pub fn default_del_produces_html_test() {
@@ -110,10 +111,17 @@ pub fn default_del_produces_html_test() {
   assert element.to_string(result) == "<del>deleted</del>"
 }
 
-pub fn default_code_produces_html_test() {
+pub fn default_code_produces_html_without_language_test() {
   let c = components.default()
-  let result = c.code([element.text("code")])
+  let result = c.code(option.None, [element.text("code")])
   assert element.to_string(result) == "<code>code</code>"
+}
+
+pub fn default_code_produces_html_with_language_test() {
+  let c = components.default()
+  let result = c.code(option.Some("gleam"), [element.text("code")])
+  assert element.to_string(result)
+    == "<code class=\"language-gleam\">code</code>"
 }
 
 pub fn default_pre_produces_html_test() {
@@ -226,10 +234,10 @@ pub fn blockquote_setter_overrides_default_test() {
 pub fn code_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.code(fn(children) {
+    |> components.code(fn(_language, children) {
       html.code([attribute.class("highlight")], children)
     })
-  let result = c.code([element.text("x")])
+  let result = c.code(option.None, [element.text("x")])
   assert element.to_string(result) == "<code class=\"highlight\">x</code>"
 }
 
@@ -303,14 +311,14 @@ pub fn hr_setter_overrides_default_test() {
   assert element.to_string(result) == "<hr class=\"divider\">"
 }
 
-pub fn i_setter_overrides_default_test() {
+pub fn em_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.i(fn(children) {
-      html.i([attribute.class("emphasis")], children)
+    |> components.em(fn(children) {
+      html.em([attribute.class("emphasis")], children)
     })
-  let result = c.i([element.text("text")])
-  assert element.to_string(result) == "<i class=\"emphasis\">text</i>"
+  let result = c.em([element.text("text")])
+  assert element.to_string(result) == "<em class=\"emphasis\">text</em>"
 }
 
 pub fn img_setter_overrides_default_test() {

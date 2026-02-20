@@ -93,7 +93,7 @@ pub fn render_strong_text_test() {
 
 pub fn render_emphasis_text_test() {
   let result = render("*italic text*")
-  assert result == "<p><i>italic text</i></p>"
+  assert result == "<p><em>italic text</em></p>"
 }
 
 pub fn render_inline_code_test() {
@@ -115,12 +115,12 @@ pub fn render_highlight_text_test() {
 
 pub fn render_strong_inside_emphasis_test() {
   let result = render("*italic and **bold***")
-  assert result == "<p><i>italic and <strong>bold</strong></i></p>"
+  assert result == "<p><em>italic and <strong>bold</strong></em></p>"
 }
 
 pub fn render_emphasis_inside_strong_test() {
   let result = render("**bold and *italic***")
-  assert result == "<p><strong>bold and <i>italic</i></strong></p>"
+  assert result == "<p><strong>bold and <em>italic</em></strong></p>"
 }
 
 pub fn render_code_inside_strong_test() {
@@ -238,7 +238,8 @@ pub fn render_table_test() {
 
 pub fn render_paragraph_with_mixed_inline_test() {
   let result = render("Normal **bold** and *italic* text")
-  assert result == "<p>Normal <strong>bold</strong> and <i>italic</i> text</p>"
+  assert result
+    == "<p>Normal <strong>bold</strong> and <em>italic</em> text</p>"
 }
 
 pub fn render_heading_with_inline_formatting_test() {
@@ -254,7 +255,7 @@ pub fn render_blockquote_with_formatting_test() {
 pub fn render_list_with_inline_formatting_test() {
   let result = render("- **bold** item\n- *italic* item")
   assert result
-    == "<ul><li><strong>bold</strong> item</li><li><i>italic</i> item</li></ul>"
+    == "<ul><li><strong>bold</strong> item</li><li><em>italic</em> item</li></ul>"
 }
 
 // --- Custom components test ---

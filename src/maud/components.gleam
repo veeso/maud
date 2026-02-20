@@ -19,6 +19,7 @@
 ////   |> components.p(fn(children) { html.p([attribute.class("body")], children) })
 //// ```
 
+import gleam/option.{type Option, None, Some}
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -33,8 +34,9 @@ pub type Components(a) {
   Components(
     a: fn(List(Element(a))) -> Element(a),
     blockquote: fn(List(Element(a))) -> Element(a),
-    code: fn(List(Element(a))) -> Element(a),
+    code: fn(Option(String), List(Element(a))) -> Element(a),
     del: fn(List(Element(a))) -> Element(a),
+    em: fn(List(Element(a))) -> Element(a),
     h1: fn(List(Element(a))) -> Element(a),
     h2: fn(List(Element(a))) -> Element(a),
     h3: fn(List(Element(a))) -> Element(a),
@@ -42,7 +44,6 @@ pub type Components(a) {
     h5: fn(List(Element(a))) -> Element(a),
     h6: fn(List(Element(a))) -> Element(a),
     hr: fn(List(Element(a))) -> Element(a),
-    i: fn(List(Element(a))) -> Element(a),
     img: fn(List(Element(a))) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
     mark: fn(List(Element(a))) -> Element(a),
@@ -72,8 +73,15 @@ pub fn default() -> Components(a) {
   Components(
     a: default_view(html.a),
     blockquote: default_view(html.blockquote),
-    code: default_view(html.code),
+    code: fn(language, children) {
+      case language {
+        Some(lang) ->
+          html.code([attribute.class("language-" <> lang)], children)
+        None -> html.code([], children)
+      }
+    },
     del: default_view(html.del),
+    em: default_view(html.em),
     h1: default_view(html.h1),
     h2: default_view(html.h2),
     h3: default_view(html.h3),
@@ -81,7 +89,6 @@ pub fn default() -> Components(a) {
     h5: default_view(html.h5),
     h6: default_view(html.h6),
     hr: fn(_) { html.hr([]) },
-    i: default_view(html.i),
     img: fn(_) { html.img([]) },
     li: default_view(html.li),
     mark: default_view(html.mark),
@@ -133,17 +140,24 @@ pub fn blockquote(
 
 /// Set the `code` component used for inline code and code blocks.
 ///
+/// The first argument is the optional language identifier (e.g. `Some("gleam")`
+/// for fenced code blocks with a language tag, `None` for inline code).
+///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.code(fn(children) {
-///   html.code([attribute.class("code")], children)
+/// |> components.code(fn(language, children) {
+///   case language {
+///     option.Some(lang) ->
+///       html.code([attribute.class("lang-" <> lang)], children)
+///     option.None -> html.code([attribute.class("code")], children)
+///   }
 /// })
 /// ```
 pub fn code(
   components: Components(a),
-  code: fn(List(Element(a))) -> Element(a),
+  code: fn(Option(String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, code: code)
 }
@@ -163,6 +177,14 @@ pub fn del(
   del: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, del: del)
+}
+
+/// Set the `em` component used for emphasized (italic) text.
+pub fn em(
+  components: Components(a),
+  em: fn(List(Element(a))) -> Element(a),
+) -> Components(a) {
+  Components(..components, em: em)
 }
 
 /// Set the `h1` component used for level 1 headings.
@@ -228,14 +250,6 @@ pub fn hr(
   hr: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, hr: hr)
-}
-
-/// Set the `i` component used for emphasized (italic) text.
-pub fn i(
-  components: Components(a),
-  i: fn(List(Element(a))) -> Element(a),
-) -> Components(a) {
-  Components(..components, i: i)
 }
 
 /// Set the `img` component used for images.

@@ -54,6 +54,7 @@
 
 import lustre/element.{type Element}
 import maud/components.{type Components}
+import maud/internal/render
 import mork
 import mork/document.{type Document, type Options}
 
@@ -78,7 +79,8 @@ pub fn render_document(
   document: Document,
   components: Components(a),
 ) -> List(Element(a)) {
-  todo
+  render.render_loop(document.blocks, components)
+  |> render.footnote(document, components)
 }
 
 /// Parse a Markdown string and render it into a list of Lustre elements.
