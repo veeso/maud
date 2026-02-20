@@ -1,5 +1,6 @@
 //// Tests for the maud/components module: default components and setter functions.
 
+import gleam/int
 import gleam/option
 import lustre/attribute
 import lustre/element
@@ -15,17 +16,19 @@ pub fn default_returns_components_test() {
 
   // Each component should produce a valid element without crashing.
   let _ = c.p(children)
-  let _ = c.h1(children)
-  let _ = c.h2(children)
-  let _ = c.h3(children)
-  let _ = c.h4(children)
-  let _ = c.h5(children)
-  let _ = c.h6(children)
-  let _ = c.a(children)
+  let _ = c.h1("heading-1", children)
+  let _ = c.h2("heading-2", children)
+  let _ = c.h3("heading-3", children)
+  let _ = c.h4("heading-4", children)
+  let _ = c.h5("heading-5", children)
+  let _ = c.h6("heading-6", children)
+  let _ = c.a("https://example.com", option.None, children)
   let _ = c.blockquote(children)
+  let _ = c.checkbox(True)
   let _ = c.code(option.None, children)
   let _ = c.del(children)
   let _ = c.em(children)
+  let _ = c.footnote(1, children)
   let _ = c.img("https://example.com/img.png", option.None, children)
   let _ = c.li(children)
   let _ = c.mark(children)
@@ -53,44 +56,52 @@ pub fn default_p_produces_html_test() {
 
 pub fn default_h1_produces_html_test() {
   let c = components.default()
-  let result = c.h1([element.text("title")])
-  assert element.to_string(result) == "<h1>title</h1>"
+  let result = c.h1("heading-1", [element.text("title")])
+  assert element.to_string(result) == "<h1 id=\"heading-1\">title</h1>"
 }
 
 pub fn default_h2_produces_html_test() {
   let c = components.default()
-  let result = c.h2([element.text("title")])
-  assert element.to_string(result) == "<h2>title</h2>"
+  let result = c.h2("heading-2", [element.text("title")])
+  assert element.to_string(result) == "<h2 id=\"heading-2\">title</h2>"
 }
 
 pub fn default_h3_produces_html_test() {
   let c = components.default()
-  let result = c.h3([element.text("title")])
-  assert element.to_string(result) == "<h3>title</h3>"
+  let result = c.h3("heading-3", [element.text("title")])
+  assert element.to_string(result) == "<h3 id=\"heading-3\">title</h3>"
 }
 
 pub fn default_h4_produces_html_test() {
   let c = components.default()
-  let result = c.h4([element.text("title")])
-  assert element.to_string(result) == "<h4>title</h4>"
+  let result = c.h4("heading-4", [element.text("title")])
+  assert element.to_string(result) == "<h4 id=\"heading-4\">title</h4>"
 }
 
 pub fn default_h5_produces_html_test() {
   let c = components.default()
-  let result = c.h5([element.text("title")])
-  assert element.to_string(result) == "<h5>title</h5>"
+  let result = c.h5("heading-5", [element.text("title")])
+  assert element.to_string(result) == "<h5 id=\"heading-5\">title</h5>"
 }
 
 pub fn default_h6_produces_html_test() {
   let c = components.default()
-  let result = c.h6([element.text("title")])
-  assert element.to_string(result) == "<h6>title</h6>"
+  let result = c.h6("heading-6", [element.text("title")])
+  assert element.to_string(result) == "<h6 id=\"heading-6\">title</h6>"
 }
 
-pub fn default_a_produces_html_test() {
+pub fn default_a_produces_html_without_title_test() {
   let c = components.default()
-  let result = c.a([element.text("link")])
-  assert element.to_string(result) == "<a>link</a>"
+  let result = c.a("https://example.com", option.None, [element.text("link")])
+  assert element.to_string(result) == "<a href=\"https://example.com\">link</a>"
+}
+
+pub fn default_a_produces_html_with_title_test() {
+  let c = components.default()
+  let result =
+    c.a("https://example.com", option.Some("Example"), [element.text("link")])
+  assert element.to_string(result)
+    == "<a href=\"https://example.com\" title=\"Example\">link</a>"
 }
 
 pub fn default_strong_produces_html_test() {
@@ -103,6 +114,12 @@ pub fn default_em_produces_html_test() {
   let c = components.default()
   let result = c.em([element.text("italic")])
   assert element.to_string(result) == "<em>italic</em>"
+}
+
+pub fn default_footnote_produces_html_test() {
+  let c = components.default()
+  let result = c.footnote(1, [element.text("1")])
+  assert element.to_string(result) == "<sup><a id=\"fnref-1\">1</a></sup>"
 }
 
 pub fn default_del_produces_html_test() {
@@ -134,6 +151,18 @@ pub fn default_blockquote_produces_html_test() {
   let c = components.default()
   let result = c.blockquote([element.text("quote")])
   assert element.to_string(result) == "<blockquote>quote</blockquote>"
+}
+
+pub fn default_checkbox_checked_produces_html_test() {
+  let c = components.default()
+  let result = c.checkbox(True)
+  assert element.to_string(result) == "<input checked disabled>"
+}
+
+pub fn default_checkbox_unchecked_produces_html_test() {
+  let c = components.default()
+  let result = c.checkbox(False)
+  assert element.to_string(result) == "<input disabled>"
 }
 
 pub fn default_ul_produces_html_test() {
@@ -222,11 +251,12 @@ pub fn default_img_produces_html_with_alt_test() {
 pub fn a_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.a(fn(children) {
-      html.a([attribute.class("custom-link")], children)
+    |> components.a(fn(href, _title, children) {
+      html.a([attribute.class("custom-link"), attribute.href(href)], children)
     })
-  let result = c.a([element.text("link")])
-  assert element.to_string(result) == "<a class=\"custom-link\">link</a>"
+  let result = c.a("https://example.com", option.None, [element.text("link")])
+  assert element.to_string(result)
+    == "<a class=\"custom-link\" href=\"https://example.com\">link</a>"
 }
 
 pub fn blockquote_setter_overrides_default_test() {
@@ -238,6 +268,20 @@ pub fn blockquote_setter_overrides_default_test() {
   let result = c.blockquote([element.text("text")])
   assert element.to_string(result)
     == "<blockquote class=\"quote\">text</blockquote>"
+}
+
+pub fn checkbox_setter_overrides_default_test() {
+  let c =
+    components.default()
+    |> components.checkbox(fn(checked) {
+      let attrs = case checked {
+        True -> [attribute.class("done")]
+        False -> []
+      }
+      html.input(attrs)
+    })
+  let result = c.checkbox(True)
+  assert element.to_string(result) == "<input class=\"done\">"
 }
 
 pub fn code_setter_overrides_default_test() {
@@ -263,52 +307,60 @@ pub fn del_setter_overrides_default_test() {
 pub fn h1_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h1(fn(children) {
+    |> components.h1(fn(_id, children) {
       html.h1([attribute.class("title")], children)
     })
-  let result = c.h1([element.text("heading")])
+  let result = c.h1("heading-1", [element.text("heading")])
   assert element.to_string(result) == "<h1 class=\"title\">heading</h1>"
 }
 
 pub fn h2_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h2(fn(children) {
+    |> components.h2(fn(_id, children) {
       html.h2([attribute.class("subtitle")], children)
     })
-  let result = c.h2([element.text("heading")])
+  let result = c.h2("heading-2", [element.text("heading")])
   assert element.to_string(result) == "<h2 class=\"subtitle\">heading</h2>"
 }
 
 pub fn h3_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h3(fn(children) { html.h3([attribute.class("h3")], children) })
-  let result = c.h3([element.text("heading")])
+    |> components.h3(fn(_id, children) {
+      html.h3([attribute.class("h3")], children)
+    })
+  let result = c.h3("heading-3", [element.text("heading")])
   assert element.to_string(result) == "<h3 class=\"h3\">heading</h3>"
 }
 
 pub fn h4_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h4(fn(children) { html.h4([attribute.class("h4")], children) })
-  let result = c.h4([element.text("heading")])
+    |> components.h4(fn(_id, children) {
+      html.h4([attribute.class("h4")], children)
+    })
+  let result = c.h4("heading-4", [element.text("heading")])
   assert element.to_string(result) == "<h4 class=\"h4\">heading</h4>"
 }
 
 pub fn h5_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h5(fn(children) { html.h5([attribute.class("h5")], children) })
-  let result = c.h5([element.text("heading")])
+    |> components.h5(fn(_id, children) {
+      html.h5([attribute.class("h5")], children)
+    })
+  let result = c.h5("heading-5", [element.text("heading")])
   assert element.to_string(result) == "<h5 class=\"h5\">heading</h5>"
 }
 
 pub fn h6_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h6(fn(children) { html.h6([attribute.class("h6")], children) })
-  let result = c.h6([element.text("heading")])
+    |> components.h6(fn(_id, children) {
+      html.h6([attribute.class("h6")], children)
+    })
+  let result = c.h6("heading-6", [element.text("heading")])
   assert element.to_string(result) == "<h6 class=\"h6\">heading</h6>"
 }
 
@@ -328,6 +380,16 @@ pub fn em_setter_overrides_default_test() {
     })
   let result = c.em([element.text("text")])
   assert element.to_string(result) == "<em class=\"emphasis\">text</em>"
+}
+
+pub fn footnote_setter_overrides_default_test() {
+  let c =
+    components.default()
+    |> components.footnote(fn(num, children) {
+      html.a([attribute.href("#fn-" <> int.to_string(num))], children)
+    })
+  let result = c.footnote(1, [element.text("1")])
+  assert element.to_string(result) == "<a href=\"#fn-1\">1</a>"
 }
 
 pub fn img_setter_overrides_default_test() {
@@ -474,7 +536,7 @@ pub fn ul_setter_overrides_default_test() {
 pub fn chained_setters_override_multiple_components_test() {
   let c =
     components.default()
-    |> components.h1(fn(children) {
+    |> components.h1(fn(_id, children) {
       html.h1([attribute.class("heading")], children)
     })
     |> components.p(fn(children) {
@@ -484,7 +546,7 @@ pub fn chained_setters_override_multiple_components_test() {
       html.strong([attribute.class("bold")], children)
     })
 
-  let h1_result = c.h1([element.text("title")])
+  let h1_result = c.h1("heading-1", [element.text("title")])
   assert element.to_string(h1_result) == "<h1 class=\"heading\">title</h1>"
 
   let p_result = c.p([element.text("text")])
@@ -498,17 +560,17 @@ pub fn chained_setters_override_multiple_components_test() {
 pub fn setter_does_not_affect_other_components_test() {
   let c =
     components.default()
-    |> components.h1(fn(children) {
+    |> components.h1(fn(_id, children) {
       html.h1([attribute.class("custom")], children)
     })
 
   // h1 is customized
-  let h1_result = c.h1([element.text("heading")])
+  let h1_result = c.h1("heading-1", [element.text("heading")])
   assert element.to_string(h1_result) == "<h1 class=\"custom\">heading</h1>"
 
   // h2 remains default
-  let h2_result = c.h2([element.text("heading")])
-  assert element.to_string(h2_result) == "<h2>heading</h2>"
+  let h2_result = c.h2("heading-2", [element.text("heading")])
+  assert element.to_string(h2_result) == "<h2 id=\"heading-2\">heading</h2>"
 }
 
 // --- Component with custom element type test ---

@@ -19,6 +19,7 @@
 ////   |> components.p(fn(children) { html.p([attribute.class("body")], children) })
 //// ```
 
+import gleam/int
 import gleam/option.{type Option, None, Some}
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
@@ -32,17 +33,19 @@ import lustre/element/html
 /// otherwise they will not appear in the output.
 pub type Components(a) {
   Components(
-    a: fn(List(Element(a))) -> Element(a),
+    a: fn(String, Option(String), List(Element(a))) -> Element(a),
     blockquote: fn(List(Element(a))) -> Element(a),
+    checkbox: fn(Bool) -> Element(a),
     code: fn(Option(String), List(Element(a))) -> Element(a),
     del: fn(List(Element(a))) -> Element(a),
     em: fn(List(Element(a))) -> Element(a),
-    h1: fn(List(Element(a))) -> Element(a),
-    h2: fn(List(Element(a))) -> Element(a),
-    h3: fn(List(Element(a))) -> Element(a),
-    h4: fn(List(Element(a))) -> Element(a),
-    h5: fn(List(Element(a))) -> Element(a),
-    h6: fn(List(Element(a))) -> Element(a),
+    footnote: fn(Int, List(Element(a))) -> Element(a),
+    h1: fn(String, List(Element(a))) -> Element(a),
+    h2: fn(String, List(Element(a))) -> Element(a),
+    h3: fn(String, List(Element(a))) -> Element(a),
+    h4: fn(String, List(Element(a))) -> Element(a),
+    h5: fn(String, List(Element(a))) -> Element(a),
+    h6: fn(String, List(Element(a))) -> Element(a),
     hr: fn(List(Element(a))) -> Element(a),
     img: fn(String, Option(String), List(Element(a))) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
@@ -71,8 +74,21 @@ pub type Components(a) {
 /// ```
 pub fn default() -> Components(a) {
   Components(
-    a: default_view(html.a),
+    a: fn(href, title, children) {
+      let title_attr = case title {
+        Some(t) -> [attribute.title(t)]
+        None -> []
+      }
+      html.a([attribute.href(href), ..title_attr], children)
+    },
     blockquote: default_view(html.blockquote),
+    checkbox: fn(checked) {
+      let attrs = case checked {
+        True -> [attribute.checked(True), attribute.disabled(True)]
+        False -> [attribute.disabled(True)]
+      }
+      html.input(attrs)
+    },
     code: fn(language, children) {
       case language {
         Some(lang) ->
@@ -82,12 +98,17 @@ pub fn default() -> Components(a) {
     },
     del: default_view(html.del),
     em: default_view(html.em),
-    h1: default_view(html.h1),
-    h2: default_view(html.h2),
-    h3: default_view(html.h3),
-    h4: default_view(html.h4),
-    h5: default_view(html.h5),
-    h6: default_view(html.h6),
+    footnote: fn(num, children) {
+      html.sup([], [
+        html.a([attribute.id("fnref-" <> int.to_string(num))], children),
+      ])
+    },
+    h1: heading_view(html.h1),
+    h2: heading_view(html.h2),
+    h3: heading_view(html.h3),
+    h4: heading_view(html.h4),
+    h5: heading_view(html.h5),
+    h6: heading_view(html.h6),
     hr: fn(_) { html.hr([]) },
     img: fn(uri, alt, _children) {
       case alt {
@@ -114,15 +135,20 @@ pub fn default() -> Components(a) {
 
 /// Set the `a` component used for links.
 ///
+/// The first argument is the link href, the second is an optional title,
+/// and the third is the list of children elements.
+///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.a(fn(children) { html.a([attribute.class("link")], children) })
+/// |> components.a(fn(href, _title, children) {
+///   html.a([attribute.href(href), attribute.class("link")], children)
+/// })
 /// ```
 pub fn a(
   components: Components(a),
-  view: fn(List(Element(a))) -> Element(a),
+  view: fn(String, Option(String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, a: view)
 }
@@ -142,6 +168,16 @@ pub fn blockquote(
   blockquote: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, blockquote: blockquote)
+}
+
+/// Set the `checkbox` component used for task list checkboxes.
+///
+/// The first argument indicates whether the checkbox is checked.
+pub fn checkbox(
+  components: Components(a),
+  checkbox: fn(Bool) -> Element(a),
+) -> Components(a) {
+  Components(..components, checkbox: checkbox)
 }
 
 /// Set the `code` component used for inline code and code blocks.
@@ -193,59 +229,81 @@ pub fn em(
   Components(..components, em: em)
 }
 
+/// Set the `footnote` component used for footnote references.
+///
+/// The first argument is the footnote number, the second is the children elements.
+pub fn footnote(
+  components: Components(a),
+  footnote: fn(Int, List(Element(a))) -> Element(a),
+) -> Components(a) {
+  Components(..components, footnote: footnote)
+}
+
 /// Set the `h1` component used for level 1 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 ///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.h1(fn(children) {
-///   html.h1([attribute.class("heading")], children)
+/// |> components.h1(fn(id, children) {
+///   html.h1([attribute.id(id), attribute.class("heading")], children)
 /// })
 /// ```
 pub fn h1(
   components: Components(a),
-  h1: fn(List(Element(a))) -> Element(a),
+  h1: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h1: h1)
 }
 
 /// Set the `h2` component used for level 2 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 pub fn h2(
   components: Components(a),
-  h2: fn(List(Element(a))) -> Element(a),
+  h2: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h2: h2)
 }
 
 /// Set the `h3` component used for level 3 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 pub fn h3(
   components: Components(a),
-  h3: fn(List(Element(a))) -> Element(a),
+  h3: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h3: h3)
 }
 
 /// Set the `h4` component used for level 4 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 pub fn h4(
   components: Components(a),
-  h4: fn(List(Element(a))) -> Element(a),
+  h4: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h4: h4)
 }
 
 /// Set the `h5` component used for level 5 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 pub fn h5(
   components: Components(a),
-  h5: fn(List(Element(a))) -> Element(a),
+  h5: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h5: h5)
 }
 
 /// Set the `h6` component used for level 6 headings.
+///
+/// The first argument is the heading id, the second is the children elements.
 pub fn h6(
   components: Components(a),
-  h6: fn(List(Element(a))) -> Element(a),
+  h6: fn(String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h6: h6)
 }
@@ -379,4 +437,12 @@ fn default_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
 ) -> fn(List(Element(a))) -> Element(a) {
   fn(children) { view([], children) }
+}
+
+/// A default heading view function which takes a view function that expects attributes and children,
+/// and returns a view function that expects an id and children.
+fn heading_view(
+  view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
+) -> fn(String, List(Element(a))) -> Element(a) {
+  fn(id, children) { view([attribute.id(id)], children) }
 }

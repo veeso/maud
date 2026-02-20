@@ -79,7 +79,7 @@ pub fn render_document(
   document: Document,
   components: Components(a),
 ) -> List(Element(a)) {
-  render.render_loop(document.blocks, components)
+  render.render_loop(document.blocks, document, components)
   |> render.footnote(document, components)
 }
 
