@@ -26,6 +26,12 @@ fn extended_options() -> Options {
   |> mork.extended(True)
 }
 
+/// Options with heading IDs enabled.
+fn heading_id_options() -> Options {
+  mork.configure()
+  |> mork.heading_ids(True)
+}
+
 /// Render markdown with default options and default components, return HTML string.
 fn render(markdown: String) -> String {
   maud.render_markdown(markdown, default_options(), components.default())
@@ -301,6 +307,141 @@ pub fn render_document_with_parsed_document_test() {
     |> list.map(element.to_string)
     |> string.concat()
   assert result == "<h1>Title</h1>"
+}
+
+// --- Soft break tests ---
+
+pub fn render_soft_break_test() {
+  let result = render("line one\nline two")
+  assert result == "<p>line one\nline two</p>"
+}
+
+// --- Autolink tests ---
+
+pub fn render_autolink_test() {
+  let result = render("<https://example.com>")
+  assert result
+    == "<p><a href=\"https://example.com\">https://example.com</a></p>"
+}
+
+pub fn render_email_autolink_test() {
+  let result = render_with_options("<user@example.com>", extended_options())
+  assert result
+    == "<p><a href=\"mailto:user@example.com\">user@example.com</a></p>"
+}
+
+// --- Relative and anchor link tests ---
+
+pub fn render_relative_link_test() {
+  let result = render("[page](./other.md)")
+  assert result == "<p><a href=\"./other.md\">page</a></p>"
+}
+
+pub fn render_anchor_link_test() {
+  let result = render("[section](#my-section)")
+  assert result == "<p><a href=\"#my-section\">section</a></p>"
+}
+
+// --- Loose list tests ---
+
+pub fn render_loose_unordered_list_test() {
+  let result = render("- item 1\n\n- item 2")
+  assert result == "<ul><li><p>item 1</p></li><li><p>item 2</p></li></ul>"
+}
+
+pub fn render_loose_ordered_list_test() {
+  let result = render("1. first\n\n2. second")
+  assert result == "<ol><li><p>first</p></li><li><p>second</p></li></ol>"
+}
+
+// --- Ordered list with start value ---
+
+pub fn render_ordered_list_with_start_test() {
+  let result = render("3. third\n4. fourth")
+  assert result == "<ol start=\"3\"><li>third</li><li>fourth</li></ol>"
+}
+
+// --- Table alignment tests ---
+
+pub fn render_table_with_center_alignment_test() {
+  let md = "| Header |\n| :---: |\n| cell |"
+  let result = render_with_options(md, extended_options())
+  assert result
+    == "<table><thead><tr><th style=\"text-align:center;\"> Header </th></tr></thead><tbody><tr><td style=\"text-align:center;\"> cell </td></tr></tbody></table>"
+}
+
+pub fn render_table_with_right_alignment_test() {
+  let md = "| Header |\n| ---: |\n| cell |"
+  let result = render_with_options(md, extended_options())
+  assert result
+    == "<table><thead><tr><th style=\"text-align:right;\"> Header </th></tr></thead><tbody><tr><td style=\"text-align:right;\"> cell </td></tr></tbody></table>"
+}
+
+// --- Reference image test ---
+
+pub fn render_reference_image_test() {
+  let result =
+    render("![alt text][img]\n\n[img]: https://example.com/image.png")
+  assert result
+    == "<p><img alt=\"alt text\" src=\"https://example.com/image.png\"></p>"
+}
+
+// --- Image alt text with nested inlines ---
+
+pub fn render_image_with_emphasis_in_alt_test() {
+  let result = render("![*emphasized* alt](https://example.com/img.png)")
+  assert result
+    == "<p><img alt=\"emphasized alt\" src=\"https://example.com/img.png\"></p>"
+}
+
+pub fn render_image_with_strong_in_alt_test() {
+  let result = render("![**bold** alt](https://example.com/img.png)")
+  assert result
+    == "<p><img alt=\"bold alt\" src=\"https://example.com/img.png\"></p>"
+}
+
+pub fn render_image_with_code_in_alt_test() {
+  let result = render("![`code` alt](https://example.com/img.png)")
+  assert result
+    == "<p><img alt=\"code alt\" src=\"https://example.com/img.png\"></p>"
+}
+
+// --- Footnote tests ---
+
+pub fn render_footnote_reference_test() {
+  let result = render("Text[^1].\n\n[^1]: Footnote content.")
+  assert result
+    == "<p>Text<sup><a id=\"fnref-1\">1</a></sup>.</p><p>Footnote content.</p>"
+}
+
+// --- Heading with ID tests ---
+
+pub fn render_heading_with_id_test() {
+  let result = render_with_options("# My Heading", heading_id_options())
+  assert result == "<h1 id=\"My-Heading\">My Heading</h1>"
+}
+
+// --- HTML block tests ---
+
+pub fn render_html_block_test() {
+  let result = render("<div>\nhello\n</div>")
+  assert result == "<div><div>\nhello\n</div>\n</div>"
+}
+
+// --- Raw inline HTML tests ---
+
+pub fn render_raw_inline_html_dropped_test() {
+  let result = render("text <em>inline</em> more")
+  assert result == "<p>text inline more</p>"
+}
+
+// --- Table with inline formatting in cells ---
+
+pub fn render_table_with_formatting_in_cells_test() {
+  let md = "| Header |\n| --- |\n| **bold** cell |"
+  let result = render_with_options(md, extended_options())
+  assert result
+    == "<table><thead><tr><th style=\"text-align:left;\"> Header </th></tr></thead><tbody><tr><td style=\"text-align:left;\"> <strong>bold</strong> cell </td></tr></tbody></table>"
 }
 
 // --- Empty input test ---

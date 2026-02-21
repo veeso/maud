@@ -12,7 +12,7 @@ as peer dependencies:
 
 ```sh
 gleam add maud@1
-gleam add lustre@4
+gleam add lustre@5
 gleam add mork@1
 ```
 
@@ -23,16 +23,16 @@ Render Markdown to Lustre elements with the default HTML components:
 ```gleam
 import maud
 import maud/components
-import mork/document
+import mork
 
 pub fn main() {
-  let html =
+  let elements =
     maud.render_markdown(
       "# Hello, world!\n\nThis is **maud**.",
-      document.default_options(),
+      mork.configure(),
       components.default(),
     )
-  // `html` is a `lustre/element.Element(a)` ready to use in your Lustre app
+  // `elements` is a `List(lustre/element.Element(a))` ready to use in your Lustre app
 }
 ```
 
@@ -45,31 +45,31 @@ import lustre/attribute
 import lustre/element/html
 import maud
 import maud/components
-import mork/document
+import mork
 
 pub fn main() {
   let my_components =
     components.default()
-    |> components.h1(fn(children) {
+    |> components.h1(fn(_id, children) {
       html.h1([attribute.class("text-4xl font-bold")], children)
     })
     |> components.p(fn(children) {
       html.p([attribute.class("leading-relaxed")], children)
     })
 
-  let html =
+  let elements =
     maud.render_markdown(
       "# Styled heading\n\nStyled paragraph.",
-      document.default_options(),
+      mork.configure(),
       my_components,
     )
 }
 ```
 
-Every Markdown construct has a matching setter on `Components` (`a`, `blockquote`, `code`,
-`del`, `h1`–`h6`, `hr`, `i`, `img`, `li`, `mark`, `ol`, `p`, `pre`, `span`, `strong`,
-`table`, `td`, `th`, `tr`, `u`, `ul`), so you can customize exactly what you need while
-keeping the defaults for everything else.
+Every Markdown construct has a matching setter on `Components` (`a`, `blockquote`, `checkbox`,
+`code`, `del`, `em`, `footnote`, `h1`–`h6`, `hr`, `img`, `li`, `mark`, `ol`, `p`, `pre`,
+`span`, `strong`, `table`, `tbody`, `td`, `th`, `thead`, `tr`, `u`, `ul`), so you can
+customize exactly what you need while keeping the defaults for everything else.
 
 Further documentation can be found at <https://hexdocs.pm/maud>.
 
