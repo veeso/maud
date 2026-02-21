@@ -32,14 +32,15 @@ pub fn default_returns_components_test() {
   let _ = c.img("https://example.com/img.png", option.None, children)
   let _ = c.li(children)
   let _ = c.mark(children)
-  let _ = c.ol(children)
+  let _ = c.ol(option.None, children)
   let _ = c.ul(children)
   let _ = c.pre(children)
   let _ = c.span(children)
   let _ = c.strong(children)
   let _ = c.table(children)
-  let _ = c.td(children)
-  let _ = c.th(children)
+  let _ = c.td(components.Left, children)
+  let _ = c.th(components.Left, children)
+  let _ = c.thead(children)
   let _ = c.tr(children)
   let _ = c.u(children)
   let _ = c.hr(children)
@@ -173,8 +174,14 @@ pub fn default_ul_produces_html_test() {
 
 pub fn default_ol_produces_html_test() {
   let c = components.default()
-  let result = c.ol([element.text("items")])
+  let result = c.ol(option.None, [element.text("items")])
   assert element.to_string(result) == "<ol>items</ol>"
+}
+
+pub fn default_ol_with_start_produces_html_test() {
+  let c = components.default()
+  let result = c.ol(option.Some(3), [element.text("items")])
+  assert element.to_string(result) == "<ol start=\"3\">items</ol>"
 }
 
 pub fn default_li_produces_html_test() {
@@ -195,16 +202,51 @@ pub fn default_tr_produces_html_test() {
   assert element.to_string(result) == "<tr>row</tr>"
 }
 
-pub fn default_th_produces_html_test() {
+pub fn default_th_left_produces_html_test() {
   let c = components.default()
-  let result = c.th([element.text("header")])
-  assert element.to_string(result) == "<th>header</th>"
+  let result = c.th(components.Left, [element.text("header")])
+  assert element.to_string(result)
+    == "<th style=\"text-align:left;\">header</th>"
 }
 
-pub fn default_td_produces_html_test() {
+pub fn default_th_center_produces_html_test() {
   let c = components.default()
-  let result = c.td([element.text("cell")])
-  assert element.to_string(result) == "<td>cell</td>"
+  let result = c.th(components.Center, [element.text("header")])
+  assert element.to_string(result)
+    == "<th style=\"text-align:center;\">header</th>"
+}
+
+pub fn default_th_right_produces_html_test() {
+  let c = components.default()
+  let result = c.th(components.Right, [element.text("header")])
+  assert element.to_string(result)
+    == "<th style=\"text-align:right;\">header</th>"
+}
+
+pub fn default_thead_produces_html_test() {
+  let c = components.default()
+  let result = c.thead([element.text("header")])
+  assert element.to_string(result) == "<thead>header</thead>"
+}
+
+pub fn default_td_left_produces_html_test() {
+  let c = components.default()
+  let result = c.td(components.Left, [element.text("cell")])
+  assert element.to_string(result) == "<td style=\"text-align:left;\">cell</td>"
+}
+
+pub fn default_td_center_produces_html_test() {
+  let c = components.default()
+  let result = c.td(components.Center, [element.text("cell")])
+  assert element.to_string(result)
+    == "<td style=\"text-align:center;\">cell</td>"
+}
+
+pub fn default_td_right_produces_html_test() {
+  let c = components.default()
+  let result = c.td(components.Right, [element.text("cell")])
+  assert element.to_string(result)
+    == "<td style=\"text-align:right;\">cell</td>"
 }
 
 pub fn default_mark_produces_html_test() {
@@ -426,10 +468,10 @@ pub fn mark_setter_overrides_default_test() {
 pub fn ol_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.ol(fn(children) {
+    |> components.ol(fn(_start, children) {
       html.ol([attribute.class("ordered")], children)
     })
-  let result = c.ol([element.text("items")])
+  let result = c.ol(option.None, [element.text("items")])
   assert element.to_string(result) == "<ol class=\"ordered\">items</ol>"
 }
 
@@ -484,21 +526,31 @@ pub fn table_setter_overrides_default_test() {
 pub fn td_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.td(fn(children) {
+    |> components.td(fn(_alignment, children) {
       html.td([attribute.class("cell")], children)
     })
-  let result = c.td([element.text("data")])
+  let result = c.td(components.Left, [element.text("data")])
   assert element.to_string(result) == "<td class=\"cell\">data</td>"
 }
 
 pub fn th_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.th(fn(children) {
+    |> components.th(fn(_alignment, children) {
       html.th([attribute.class("header")], children)
     })
-  let result = c.th([element.text("col")])
+  let result = c.th(components.Left, [element.text("col")])
   assert element.to_string(result) == "<th class=\"header\">col</th>"
+}
+
+pub fn thead_setter_overrides_default_test() {
+  let c =
+    components.default()
+    |> components.thead(fn(children) {
+      html.thead([attribute.class("head")], children)
+    })
+  let result = c.thead([element.text("header")])
+  assert element.to_string(result) == "<thead class=\"head\">header</thead>"
 }
 
 pub fn tr_setter_overrides_default_test() {

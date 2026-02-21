@@ -25,6 +25,13 @@ import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
 import lustre/element/html
 
+/// Text alignment for table header columns.
+pub type Alignment {
+  Left
+  Center
+  Right
+}
+
 /// A record of view functions that control how each Markdown element is rendered.
 ///
 /// Components are rendered bottom-up: children are rendered first, then passed
@@ -50,14 +57,15 @@ pub type Components(a) {
     img: fn(String, Option(String), List(Element(a))) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
     mark: fn(List(Element(a))) -> Element(a),
-    ol: fn(List(Element(a))) -> Element(a),
+    ol: fn(Option(Int), List(Element(a))) -> Element(a),
     p: fn(List(Element(a))) -> Element(a),
     pre: fn(List(Element(a))) -> Element(a),
     span: fn(List(Element(a))) -> Element(a),
     strong: fn(List(Element(a))) -> Element(a),
     table: fn(List(Element(a))) -> Element(a),
-    td: fn(List(Element(a))) -> Element(a),
-    th: fn(List(Element(a))) -> Element(a),
+    td: fn(Alignment, List(Element(a))) -> Element(a),
+    th: fn(Alignment, List(Element(a))) -> Element(a),
+    thead: fn(List(Element(a))) -> Element(a),
     tr: fn(List(Element(a))) -> Element(a),
     u: fn(List(Element(a))) -> Element(a),
     ul: fn(List(Element(a))) -> Element(a),
@@ -119,14 +127,21 @@ pub fn default() -> Components(a) {
     },
     li: default_view(html.li),
     mark: default_view(html.mark),
-    ol: default_view(html.ol),
+    ol: fn(start, children) {
+      case start {
+        Some(s) ->
+          html.ol([attribute.attribute("start", int.to_string(s))], children)
+        None -> html.ol([], children)
+      }
+    },
     p: default_view(html.p),
     pre: default_view(html.pre),
     span: default_view(html.span),
     strong: default_view(html.strong),
     table: default_view(html.table),
-    td: default_view(html.td),
-    th: default_view(html.th),
+    td: aligned_cell_view(html.td),
+    th: aligned_cell_view(html.th),
+    thead: default_view(html.thead),
     tr: default_view(html.tr),
     u: default_view(html.u),
     ul: default_view(html.ul),
@@ -344,9 +359,12 @@ pub fn mark(
 }
 
 /// Set the `ol` component used for ordered lists.
+///
+/// The first argument is an optional start number, the second is the
+/// list of children elements.
 pub fn ol(
   components: Components(a),
-  ol: fn(List(Element(a))) -> Element(a),
+  ol: fn(Option(Int), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, ol: ol)
 }
@@ -392,19 +410,33 @@ pub fn table(
 }
 
 /// Set the `td` component used for table data cells.
+///
+/// The first argument is the column alignment, the second is the
+/// list of children elements.
 pub fn td(
   components: Components(a),
-  td: fn(List(Element(a))) -> Element(a),
+  td: fn(Alignment, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, td: td)
 }
 
 /// Set the `th` component used for table header cells.
+///
+/// The first argument is the column alignment, the second is the
+/// list of children elements.
 pub fn th(
   components: Components(a),
-  th: fn(List(Element(a))) -> Element(a),
+  th: fn(Alignment, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, th: th)
+}
+
+/// Set the `thead` component used for table header groups.
+pub fn thead(
+  components: Components(a),
+  thead: fn(List(Element(a))) -> Element(a),
+) -> Components(a) {
+  Components(..components, thead: thead)
 }
 
 /// Set the `tr` component used for table rows.
@@ -445,4 +477,20 @@ fn heading_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
 ) -> fn(String, List(Element(a))) -> Element(a) {
   fn(id, children) { view([attribute.id(id)], children) }
+}
+
+/// A default table cell view function which takes a view function that expects
+/// attributes and children, and returns a view function that expects an alignment
+/// and children.
+fn aligned_cell_view(
+  view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
+) -> fn(Alignment, List(Element(a))) -> Element(a) {
+  fn(alignment, children) {
+    let align_value = case alignment {
+      Left -> "left"
+      Center -> "center"
+      Right -> "right"
+    }
+    view([attribute.style("text-align", align_value)], children)
+  }
 }
