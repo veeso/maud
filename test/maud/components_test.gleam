@@ -29,7 +29,7 @@ pub fn default_returns_components_test() {
   let _ = c.del(children)
   let _ = c.em(children)
   let _ = c.footnote(1, children)
-  let _ = c.img("https://example.com/img.png", option.None, children)
+  let _ = c.img("https://example.com/img.png", "alt", option.None)
   let _ = c.li(children)
   let _ = c.mark(children)
   let _ = c.ol(option.None, children)
@@ -282,7 +282,7 @@ pub fn default_hr_produces_html_test() {
 
 pub fn default_img_produces_html_without_alt_test() {
   let c = components.default()
-  let result = c.img("https://example.com/img.png", option.None, [])
+  let result = c.img("https://example.com/img.png", "", option.None)
   assert element.to_string(result)
     == "<img src=\"https://example.com/img.png\">"
 }
@@ -290,9 +290,21 @@ pub fn default_img_produces_html_without_alt_test() {
 pub fn default_img_produces_html_with_alt_test() {
   let c = components.default()
   let result =
-    c.img("https://example.com/img.png", option.Some("An example image"), [])
+    c.img("https://example.com/img.png", "An example image", option.None)
   assert element.to_string(result)
-    == "<img src=\"https://example.com/img.png\" alt=\"An example image\">"
+    == "<img alt=\"An example image\" src=\"https://example.com/img.png\">"
+}
+
+pub fn default_img_produces_html_with_alt_and_title_test() {
+  let c = components.default()
+  let result =
+    c.img(
+      "https://example.com/img.png",
+      "An example image",
+      option.Some("Image Title"),
+    )
+  assert element.to_string(result)
+    == "<img alt=\"An example image\" src=\"https://example.com/img.png\" title=\"Image Title\">"
 }
 
 // --- Setter function tests ---
@@ -444,12 +456,12 @@ pub fn footnote_setter_overrides_default_test() {
 pub fn img_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.img(fn(uri, _alt, _children) {
+    |> components.img(fn(uri, _alt, _title) {
       html.img([attribute.src(uri), attribute.class("image")])
     })
-  let result = c.img("https://example.com/img.png", option.None, [])
+  let result = c.img("https://example.com/img.png", "", option.None)
   assert element.to_string(result)
-    == "<img src=\"https://example.com/img.png\" class=\"image\">"
+    == "<img class=\"image\" src=\"https://example.com/img.png\">"
 }
 
 pub fn li_setter_overrides_default_test() {

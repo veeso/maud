@@ -37,7 +37,7 @@
 ////
 //// let my_components =
 ////   components.default()
-////   |> components.h1(fn(children) {
+////   |> components.h1(fn(_id, children) {
 ////     html.h1([attribute.class("text-4xl font-bold")], children)
 ////   })
 ////   |> components.p(fn(children) {
@@ -79,7 +79,7 @@ pub fn render_document(
   document: Document,
   components: Components(a),
 ) -> List(Element(a)) {
-  render.render_loop(document.blocks, document, components)
+  render.render_blocks(document.blocks, document, components)
   |> render.footnote(document, components)
 }
 

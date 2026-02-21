@@ -12,7 +12,7 @@ import maud/components.{type Components}
 import mork/document.{type Block, type Document, type Inline}
 
 /// Recursive function to render a list of blocks into a list of Lustre elements, using the provided components configuration.
-pub fn render_loop(
+pub fn render_blocks(
   blocks: List(Block),
   document: Document,
   components: Components(a),
@@ -35,7 +35,7 @@ pub fn footnote(
   |> dict.to_list()
   |> list.sort(fn(a, b) { string.compare(a.0, b.0) })
   |> list.map(fn(tup) { tup.1 })
-  |> list.flat_map(fn(doc) { render_loop(doc.blocks, document, components) })
+  |> list.flat_map(fn(doc) { render_blocks(doc.blocks, document, components) })
   |> fn(footnotes) { list.append(acc, footnotes) }
 }
 
@@ -175,7 +175,7 @@ fn render_blockquote(
   components: Components(a),
 ) -> Element(a) {
   blocks
-  |> render_loop(document, components)
+  |> render_blocks(document, components)
   |> components.blockquote()
 }
 
@@ -234,19 +234,20 @@ fn render_highlight(
   |> components.mark()
 }
 
-/// Render an image by extracting the source URI from the link data, rendering the child inlines as the alt text, and passing them to the `img` component function.
+/// Render an image by extracting the source URI and alt text from the link
+/// data and inlines, and passing them to the `img` component function.
 fn render_img(
   inlines: List(Inline),
   link_data: document.LinkData,
-  document: Document,
+  _document: Document,
   components: Components(a),
 ) -> Element(a) {
-  let src = src(link_data.dest)
-  inlines
-  |> render_inlines(document, components)
-  |> fn(children) { components.img(src, link_data.title, children) }
+  let uri = src(link_data.dest)
+  let alt = inlines_to_text(inlines)
+  components.img(uri, alt, link_data.title)
 }
 
+/// Render an inline HTML element by creating a Lustre element with the given tag, attributes, and children.
 fn render_inline_html(
   tag: String,
   attributes: dict.Dict(String, String),
@@ -261,7 +262,8 @@ fn render_inline_html(
   )
 }
 
-/// Render an ordered list by rendering each list item as a list of blocks and passing them to the `ol` component function.
+/// Render an ordered list by rendering each list item wrapped in `<li>` and
+/// passing them to the `ol` component function.
 fn render_ol(
   start: Option(Int),
   pack: document.ListPack,
@@ -271,15 +273,14 @@ fn render_ol(
 ) -> Element(a) {
   let children =
     items
-    |> list.flat_map(fn(list_items) {
-      list.map(list_items.blocks, fn(block) {
-        render_block(block, document, components, pack)
-      })
-    })
+    |> list.map(fn(item) { render_list_item(item, pack, document, components) })
   components.ol(start, children)
 }
 
 /// Render a paragraph by rendering its child inlines and passing them to the `p` component function.
+///
+/// When inside a tight list, paragraph content is rendered as a bare fragment
+/// (no `<p>` wrapper) per the CommonMark specification.
 fn render_paragraph(
   pack: document.ListPack,
   inlines: List(Inline),
@@ -289,7 +290,7 @@ fn render_paragraph(
   let text = render_inlines(inlines, document, components)
   case pack {
     document.Tight -> element.fragment(text)
-    document.Loose -> html.p([], text)
+    document.Loose -> components.p(text)
   }
 }
 
@@ -302,7 +303,7 @@ fn render_pre(
   components.pre([components.code(language, [element.text(text)])])
 }
 
-/// Render a strikethrough inline by rendering its child inlines and passing them to the `u` component function.
+/// Render a strikethrough inline by rendering its child inlines and passing them to the `del` component function.
 fn render_strikethrough(
   inlines: List(Inline),
   document: Document,
@@ -310,7 +311,7 @@ fn render_strikethrough(
 ) -> Element(a) {
   inlines
   |> render_inlines(document, components)
-  |> components.u()
+  |> components.del()
 }
 
 /// Render a strong (bold) inline by rendering its child inlines and passing them to the `strong` component function.
@@ -324,7 +325,7 @@ fn render_strong(
   |> components.strong()
 }
 
-/// Render a table by rendering the header and rows and passing them to the `table` component function.
+/// Render a table by rendering the header and body, then passing them to the `table` component function.
 fn render_table(
   header: List(document.THead),
   rows: List(List(document.Cell)),
@@ -334,7 +335,7 @@ fn render_table(
   let thead = render_thead(header, document, components)
   let aligns = list.map(header, fn(head) { head.align })
   let tbody = render_tbody(rows, aligns, document, components)
-  components.table(list.append(thead, [tbody]))
+  components.table([thead, tbody])
 }
 
 /// Render the table body by rendering each row and passing them to the `tbody` component function.
@@ -366,16 +367,18 @@ fn render_tr(
   |> components.tr()
 }
 
-/// Render the table header by rendering each header cell and passing them to the `thead` component function.
+/// Render the table header by wrapping header cells in a `<tr>` inside a `<thead>`.
 fn render_thead(
   headers: List(document.THead),
   document: Document,
   components: Components(a),
-) -> List(Element(a)) {
+) -> Element(a) {
   headers
   |> list.map(fn(header) {
     render_th(header.align, header.inlines, document, components)
   })
+  |> components.tr()
+  |> fn(row) { components.thead([row]) }
 }
 
 /// Render a table data cell by rendering its child inlines and passing them to the `td` component function with the appropriate alignment.
@@ -407,7 +410,8 @@ fn render_thematic_break(components: Components(a)) -> Element(a) {
   components.hr([])
 }
 
-/// Render an unordered list by rendering each list item as a list of blocks and passing them to the `ul` component function.
+/// Render an unordered list by rendering each list item wrapped in `<li>` and
+/// passing them to the `ul` component function.
 fn render_ul(
   pack: document.ListPack,
   items: List(document.ListItem),
@@ -415,11 +419,7 @@ fn render_ul(
   components: Components(a),
 ) -> Element(a) {
   items
-  |> list.flat_map(fn(list_items) {
-    list.map(list_items.blocks, fn(block) {
-      render_block(block, document, components, pack)
-    })
-  })
+  |> list.map(fn(item) { render_list_item(item, pack, document, components) })
   |> components.ul()
 }
 
@@ -439,6 +439,46 @@ fn html_attributes(
   attributes
   |> dict.to_list()
   |> list.map(fn(pair) { attribute.attribute(pair.0, pair.1) })
+}
+
+/// Render a single list item by processing its blocks and wrapping them in
+/// the `li` component. For tight lists, paragraph inlines are extracted
+/// directly to avoid `element.fragment` comment markers in output.
+fn render_list_item(
+  list_item: document.ListItem,
+  pack: document.ListPack,
+  document: Document,
+  components: Components(a),
+) -> Element(a) {
+  list_item.blocks
+  |> list.flat_map(fn(block) {
+    case pack, block {
+      // For tight lists, extract paragraph inlines directly without wrapping
+      document.Tight, document.Paragraph(inlines: inlines, ..) ->
+        render_inlines(inlines, document, components)
+      // For all other cases, render the block normally
+      _, _ -> [render_block(block, document, components, pack)]
+    }
+  })
+  |> components.li()
+}
+
+/// Extract plain text from a list of inlines, used for image alt text.
+fn inlines_to_text(inlines: List(Inline)) -> String {
+  inlines
+  |> list.map(fn(inline) {
+    case inline {
+      document.Text(text) -> text
+      document.CodeSpan(text) -> text
+      document.Emphasis(inner) -> inlines_to_text(inner)
+      document.Strong(inner) -> inlines_to_text(inner)
+      document.Strikethrough(inner) -> inlines_to_text(inner)
+      document.Highlight(inner) -> inlines_to_text(inner)
+      document.SoftBreak | document.HardBreak -> " "
+      _ -> ""
+    }
+  })
+  |> string.concat()
 }
 
 /// Convert Mork's alignment type to Maud's alignment type for use in table rendering.

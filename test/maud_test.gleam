@@ -176,18 +176,18 @@ pub fn render_nested_unordered_list_test() {
 
 pub fn render_task_list_checked_test() {
   let result = render_with_options("- [x] done task", extended_options())
-  assert result == "<ul><li><input checked disabled>done task</li></ul>"
+  assert result == "<ul><li><input checked disabled> done task</li></ul>"
 }
 
 pub fn render_task_list_unchecked_test() {
   let result = render_with_options("- [ ] open task", extended_options())
-  assert result == "<ul><li><input disabled>open task</li></ul>"
+  assert result == "<ul><li><input disabled> open task</li></ul>"
 }
 
 pub fn render_task_list_mixed_test() {
   let result = render_with_options("- [x] done\n- [ ] open", extended_options())
   assert result
-    == "<ul><li><input checked disabled>done</li><li><input disabled>open</li></ul>"
+    == "<ul><li><input checked disabled> done</li><li><input disabled> open</li></ul>"
 }
 
 // --- Link tests ---
@@ -213,14 +213,14 @@ pub fn render_reference_link_test() {
 pub fn render_image_test() {
   let result = render("![alt text](https://example.com/image.png)")
   assert result
-    == "<p><img src=\"https://example.com/image.png\" alt=\"alt text\"></p>"
+    == "<p><img alt=\"alt text\" src=\"https://example.com/image.png\"></p>"
 }
 
 pub fn render_image_with_title_test() {
   let result =
     render("![alt text](https://example.com/image.png \"Image Title\")")
   assert result
-    == "<p><img src=\"https://example.com/image.png\" alt=\"alt text\" title=\"Image Title\"></p>"
+    == "<p><img alt=\"alt text\" src=\"https://example.com/image.png\" title=\"Image Title\"></p>"
 }
 
 // --- Thematic break tests ---
@@ -249,7 +249,7 @@ pub fn render_table_test() {
     "| Header 1 | Header 2 |\n| --- | --- |\n| cell 1 | cell 2 |\n| cell 3 | cell 4 |"
   let result = render_with_options(md, extended_options())
   assert result
-    == "<table><tr><th>Header 1</th><th>Header 2</th></tr><tr><td>cell 1</td><td>cell 2</td></tr><tr><td>cell 3</td><td>cell 4</td></tr></table>"
+    == "<table><thead><tr><th style=\"text-align:left;\"> Header 1 </th><th style=\"text-align:left;\"> Header 2 </th></tr></thead><tbody><tr><td style=\"text-align:left;\"> cell 1 </td><td style=\"text-align:left;\"> cell 2 </td></tr><tr><td style=\"text-align:left;\"> cell 3 </td><td style=\"text-align:left;\"> cell 4 </td></tr></tbody></table>"
 }
 
 // --- Mixed content tests ---
