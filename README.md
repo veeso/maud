@@ -2,6 +2,7 @@
 
 [![Package Version](https://img.shields.io/hexpm/v/maud)](https://hex.pm/packages/maud)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/maud/)
+[![test](https://github.com/veeso/maud/actions/workflows/test.yml/badge.svg)](https://github.com/veeso/maud/actions/workflows/test.yml)
 
 An MDX-inspired Markdown renderer for [Lustre](https://hexdocs.pm/lustre/) and Gleam.
 Maud turns Markdown text into a Lustre component tree, giving you full control over
