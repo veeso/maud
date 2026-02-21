@@ -15,7 +15,7 @@
 //// // Override specific components via piping
 //// let c =
 ////   components.default()
-////   |> components.h1(fn(children) { html.h1([attribute.class("title")], children) })
+////   |> components.h1(fn(_id, children) { html.h1([attribute.class("title")], children) })
 ////   |> components.p(fn(children) { html.p([attribute.class("body")], children) })
 //// ```
 
@@ -482,16 +482,16 @@ pub fn ul(
   Components(..components, ul: ul)
 }
 
-/// A default view function which takes a view function that expects attributes and children,
-/// and returns a view function that only expects children,
+// A default view function which takes a view function that expects attributes and children,
+// and returns a view function that only expects children.
 fn default_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
 ) -> fn(List(Element(a))) -> Element(a) {
   fn(children) { view([], children) }
 }
 
-/// A default heading view function which takes a view function that expects attributes and children,
-/// and returns a view function that expects an id and children.
+// A default heading view function which takes a view function that expects attributes and children,
+// and returns a view function that expects an id and children.
 fn heading_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
 ) -> fn(String, List(Element(a))) -> Element(a) {
@@ -503,9 +503,9 @@ fn heading_view(
   }
 }
 
-/// A default table cell view function which takes a view function that expects
-/// attributes and children, and returns a view function that expects an alignment
-/// and children.
+// A default table cell view function which takes a view function that expects
+// attributes and children, and returns a view function that expects an alignment
+// and children.
 fn aligned_cell_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
 ) -> fn(Alignment, List(Element(a))) -> Element(a) {

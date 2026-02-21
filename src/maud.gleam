@@ -13,13 +13,13 @@
 //// ```gleam
 //// import maud
 //// import maud/components
-//// import mork/document
+//// import mork
 ////
 //// // Render with default HTML components
 //// let elements =
 ////   maud.render_markdown(
 ////     "# Hello, world!\n\nThis is **maud**.",
-////     document.default_options(),
+////     mork.configure(),
 ////     components.default(),
 ////   )
 //// ```
@@ -33,7 +33,7 @@
 //// import lustre/element/html
 //// import maud
 //// import maud/components
-//// import mork/document
+//// import mork
 ////
 //// let my_components =
 ////   components.default()
@@ -47,7 +47,7 @@
 //// let elements =
 ////   maud.render_markdown(
 ////     "# Styled heading\n\nStyled paragraph.",
-////     document.default_options(),
+////     mork.configure(),
 ////     my_components,
 ////   )
 //// ```
@@ -70,10 +70,11 @@ import mork/document.{type Document, type Options}
 /// import maud
 /// import maud/components
 /// import mork
-/// import mork/document
 ///
-/// let document = mork.parse_with_options(document.default_options(), "# Hi")
-/// let elements = maud.render_document(document, components.default())
+/// let doc =
+///   mork.configure()
+///   |> mork.parse_with_options("# Hi")
+/// let elements = maud.render_document(doc, components.default())
 /// ```
 pub fn render_document(
   document: Document,
@@ -94,12 +95,12 @@ pub fn render_document(
 /// ```gleam
 /// import maud
 /// import maud/components
-/// import mork/document
+/// import mork
 ///
 /// let elements =
 ///   maud.render_markdown(
 ///     "Hello **world**",
-///     document.default_options(),
+///     mork.configure(),
 ///     components.default(),
 ///   )
 /// ```
