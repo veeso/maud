@@ -182,18 +182,20 @@ pub fn render_nested_unordered_list_test() {
 
 pub fn render_task_list_checked_test() {
   let result = render_with_options("- [x] done task", extended_options())
-  assert result == "<ul><li><input checked disabled> done task</li></ul>"
+  assert result
+    == "<ul><li><input checked disabled type=\"checkbox\"> done task</li></ul>"
 }
 
 pub fn render_task_list_unchecked_test() {
   let result = render_with_options("- [ ] open task", extended_options())
-  assert result == "<ul><li><input disabled> open task</li></ul>"
+  assert result
+    == "<ul><li><input disabled type=\"checkbox\"> open task</li></ul>"
 }
 
 pub fn render_task_list_mixed_test() {
   let result = render_with_options("- [x] done\n- [ ] open", extended_options())
   assert result
-    == "<ul><li><input checked disabled> done</li><li><input disabled> open</li></ul>"
+    == "<ul><li><input checked disabled type=\"checkbox\"> done</li><li><input disabled type=\"checkbox\"> open</li></ul>"
 }
 
 // --- Link tests ---

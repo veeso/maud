@@ -35,7 +35,6 @@ pub fn default_returns_components_test() {
   let _ = c.ol(option.None, children)
   let _ = c.ul(children)
   let _ = c.pre(children)
-  let _ = c.span(children)
   let _ = c.strong(children)
   let _ = c.table(children)
   let _ = c.tbody(children)
@@ -43,8 +42,7 @@ pub fn default_returns_components_test() {
   let _ = c.th(components.Left, children)
   let _ = c.thead(children)
   let _ = c.tr(children)
-  let _ = c.u(children)
-  let _ = c.hr(children)
+  let _ = c.hr()
   Nil
 }
 
@@ -158,13 +156,14 @@ pub fn default_blockquote_produces_html_test() {
 pub fn default_checkbox_checked_produces_html_test() {
   let c = components.default()
   let result = c.checkbox(True)
-  assert element.to_string(result) == "<input checked disabled>"
+  assert element.to_string(result)
+    == "<input checked disabled type=\"checkbox\">"
 }
 
 pub fn default_checkbox_unchecked_produces_html_test() {
   let c = components.default()
   let result = c.checkbox(False)
-  assert element.to_string(result) == "<input disabled>"
+  assert element.to_string(result) == "<input disabled type=\"checkbox\">"
 }
 
 pub fn default_ul_produces_html_test() {
@@ -262,21 +261,9 @@ pub fn default_mark_produces_html_test() {
   assert element.to_string(result) == "<mark>marked</mark>"
 }
 
-pub fn default_u_produces_html_test() {
-  let c = components.default()
-  let result = c.u([element.text("underlined")])
-  assert element.to_string(result) == "<u>underlined</u>"
-}
-
-pub fn default_span_produces_html_test() {
-  let c = components.default()
-  let result = c.span([element.text("content")])
-  assert element.to_string(result) == "<span>content</span>"
-}
-
 pub fn default_hr_produces_html_test() {
   let c = components.default()
-  let result = c.hr([])
+  let result = c.hr()
   assert element.to_string(result) == "<hr>"
 }
 
@@ -428,8 +415,8 @@ pub fn h6_setter_overrides_default_test() {
 pub fn hr_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.hr(fn(_children) { html.hr([attribute.class("divider")]) })
-  let result = c.hr([])
+    |> components.hr(fn() { html.hr([attribute.class("divider")]) })
+  let result = c.hr()
   assert element.to_string(result) == "<hr class=\"divider\">"
 }
 
@@ -512,16 +499,6 @@ pub fn pre_setter_overrides_default_test() {
   assert element.to_string(result) == "<pre class=\"code-block\">code</pre>"
 }
 
-pub fn span_setter_overrides_default_test() {
-  let c =
-    components.default()
-    |> components.span(fn(children) {
-      html.span([attribute.class("inline")], children)
-    })
-  let result = c.span([element.text("text")])
-  assert element.to_string(result) == "<span class=\"inline\">text</span>"
-}
-
 pub fn strong_setter_overrides_default_test() {
   let c =
     components.default()
@@ -590,16 +567,6 @@ pub fn tr_setter_overrides_default_test() {
     })
   let result = c.tr([element.text("cells")])
   assert element.to_string(result) == "<tr class=\"row\">cells</tr>"
-}
-
-pub fn u_setter_overrides_default_test() {
-  let c =
-    components.default()
-    |> components.u(fn(children) {
-      html.u([attribute.class("underline")], children)
-    })
-  let result = c.u([element.text("text")])
-  assert element.to_string(result) == "<u class=\"underline\">text</u>"
 }
 
 pub fn ul_setter_overrides_default_test() {

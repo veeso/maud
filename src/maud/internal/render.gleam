@@ -12,6 +12,10 @@ import maud/components.{type Components}
 import mork/document.{type Block, type Document, type Inline}
 
 /// Recursive function to render a list of blocks into a list of Lustre elements, using the provided components configuration.
+///
+/// Top-level blocks always use `document.Loose` packing so that paragraphs
+/// are wrapped in `<p>` tags. The `Tight` packing is only applied inside
+/// tight list items, where `render_list_item` handles it directly.
 pub fn render_blocks(
   blocks: List(Block),
   document: Document,
@@ -405,9 +409,9 @@ fn render_th(
   components.th(align, children)
 }
 
-/// Render a thematic break (horizontal rule) by calling the `hr` component function with no children.
+/// Render a thematic break (horizontal rule) by calling the `hr` component function.
 fn render_thematic_break(components: Components(a)) -> Element(a) {
-  components.hr([])
+  components.hr()
 }
 
 /// Render an unordered list by rendering each list item wrapped in `<li>` and

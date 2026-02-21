@@ -7,8 +7,8 @@ An MDX-inspired Markdown renderer for [Lustre](https://hexdocs.pm/lustre/) and G
 Maud turns Markdown text into a Lustre component tree, giving you full control over
 how each Markdown construct is rendered.
 
-Maud requires [lustre](https://hexdocs.pm/lustre/) and [mork](https://hexdocs.pm/mork/)
-as peer dependencies:
+Maud depends on [lustre](https://hexdocs.pm/lustre/) and [mork](https://hexdocs.pm/mork/).
+Add all three packages to your project:
 
 ```sh
 gleam add maud@1
@@ -68,8 +68,8 @@ pub fn main() {
 
 Every Markdown construct has a matching setter on `Components` (`a`, `blockquote`, `checkbox`,
 `code`, `del`, `em`, `footnote`, `h1`–`h6`, `hr`, `img`, `li`, `mark`, `ol`, `p`, `pre`,
-`span`, `strong`, `table`, `tbody`, `td`, `th`, `thead`, `tr`, `u`, `ul`), so you can
-customize exactly what you need while keeping the defaults for everything else.
+`strong`, `table`, `tbody`, `td`, `th`, `thead`, `tr`, `ul`), so you can customize exactly
+what you need while keeping the defaults for everything else.
 
 Further documentation can be found at <https://hexdocs.pm/maud>.
 
@@ -80,3 +80,7 @@ gleam build   # Build the project
 gleam test    # Run the tests
 gleam format  # Format source files
 ```
+
+## License
+
+Maud is licensed under the [MIT License](LICENSE)

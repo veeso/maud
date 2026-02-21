@@ -57,14 +57,13 @@ pub type Components(a) {
     h4: fn(String, List(Element(a))) -> Element(a),
     h5: fn(String, List(Element(a))) -> Element(a),
     h6: fn(String, List(Element(a))) -> Element(a),
-    hr: fn(List(Element(a))) -> Element(a),
+    hr: fn() -> Element(a),
     img: fn(String, String, Option(String)) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
     mark: fn(List(Element(a))) -> Element(a),
     ol: fn(Option(Int), List(Element(a))) -> Element(a),
     p: fn(List(Element(a))) -> Element(a),
     pre: fn(List(Element(a))) -> Element(a),
-    span: fn(List(Element(a))) -> Element(a),
     strong: fn(List(Element(a))) -> Element(a),
     table: fn(List(Element(a))) -> Element(a),
     tbody: fn(List(Element(a))) -> Element(a),
@@ -72,7 +71,6 @@ pub type Components(a) {
     th: fn(Alignment, List(Element(a))) -> Element(a),
     thead: fn(List(Element(a))) -> Element(a),
     tr: fn(List(Element(a))) -> Element(a),
-    u: fn(List(Element(a))) -> Element(a),
     ul: fn(List(Element(a))) -> Element(a),
   )
 }
@@ -97,8 +95,12 @@ pub fn default() -> Components(a) {
     blockquote: default_view(html.blockquote),
     checkbox: fn(checked) {
       let attrs = case checked {
-        True -> [attribute.checked(True), attribute.disabled(True)]
-        False -> [attribute.disabled(True)]
+        True -> [
+          attribute.type_("checkbox"),
+          attribute.checked(True),
+          attribute.disabled(True),
+        ]
+        False -> [attribute.type_("checkbox"), attribute.disabled(True)]
       }
       html.input(attrs)
     },
@@ -122,7 +124,7 @@ pub fn default() -> Components(a) {
     h4: heading_view(html.h4),
     h5: heading_view(html.h5),
     h6: heading_view(html.h6),
-    hr: fn(_) { html.hr([]) },
+    hr: fn() { html.hr([]) },
     img: fn(uri, alt, title) {
       let alt_attr = case alt {
         "" -> []
@@ -145,7 +147,6 @@ pub fn default() -> Components(a) {
     },
     p: default_view(html.p),
     pre: default_view(html.pre),
-    span: default_view(html.span),
     strong: default_view(html.strong),
     table: default_view(html.table),
     tbody: default_view(html.tbody),
@@ -153,7 +154,6 @@ pub fn default() -> Components(a) {
     th: aligned_cell_view(html.th),
     thead: default_view(html.thead),
     tr: default_view(html.tr),
-    u: default_view(html.u),
     ul: default_view(html.ul),
   )
 }
@@ -257,6 +257,9 @@ pub fn em(
 /// Set the `footnote` component used for footnote references.
 ///
 /// The first argument is the footnote number, the second is the children elements.
+///
+/// Note: the default implementation renders a forward reference only (no
+/// back-link from the footnote body to the reference site).
 pub fn footnote(
   components: Components(a),
   footnote: fn(Int, List(Element(a))) -> Element(a),
@@ -334,10 +337,7 @@ pub fn h6(
 }
 
 /// Set the `hr` component used for thematic breaks (horizontal rules).
-pub fn hr(
-  components: Components(a),
-  hr: fn(List(Element(a))) -> Element(a),
-) -> Components(a) {
+pub fn hr(components: Components(a), hr: fn() -> Element(a)) -> Components(a) {
   Components(..components, hr: hr)
 }
 
@@ -394,14 +394,6 @@ pub fn pre(
   pre: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, pre: pre)
-}
-
-/// Set the `span` component used for inline text containers.
-pub fn span(
-  components: Components(a),
-  span: fn(List(Element(a))) -> Element(a),
-) -> Components(a) {
-  Components(..components, span: span)
 }
 
 /// Set the `strong` component used for bold text.
@@ -464,14 +456,6 @@ pub fn tr(
   tr: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, tr: tr)
-}
-
-/// Set the `u` component used for underlined text.
-pub fn u(
-  components: Components(a),
-  u: fn(List(Element(a))) -> Element(a),
-) -> Components(a) {
-  Components(..components, u: u)
 }
 
 /// Set the `ul` component used for unordered lists.
