@@ -63,6 +63,7 @@ pub type Components(a) {
     span: fn(List(Element(a))) -> Element(a),
     strong: fn(List(Element(a))) -> Element(a),
     table: fn(List(Element(a))) -> Element(a),
+    tbody: fn(List(Element(a))) -> Element(a),
     td: fn(Alignment, List(Element(a))) -> Element(a),
     th: fn(Alignment, List(Element(a))) -> Element(a),
     thead: fn(List(Element(a))) -> Element(a),
@@ -139,6 +140,7 @@ pub fn default() -> Components(a) {
     span: default_view(html.span),
     strong: default_view(html.strong),
     table: default_view(html.table),
+    tbody: default_view(html.tbody),
     td: aligned_cell_view(html.td),
     th: aligned_cell_view(html.th),
     thead: default_view(html.thead),
@@ -407,6 +409,14 @@ pub fn table(
   table: fn(List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, table: table)
+}
+
+/// Set the `tbody` component used for table body groups.
+pub fn tbody(
+  components: Components(a),
+  tbody: fn(List(Element(a))) -> Element(a),
+) -> Components(a) {
+  Components(..components, tbody: tbody)
 }
 
 /// Set the `td` component used for table data cells.

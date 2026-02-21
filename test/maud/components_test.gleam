@@ -38,6 +38,7 @@ pub fn default_returns_components_test() {
   let _ = c.span(children)
   let _ = c.strong(children)
   let _ = c.table(children)
+  let _ = c.tbody(children)
   let _ = c.td(components.Left, children)
   let _ = c.th(components.Left, children)
   let _ = c.thead(children)
@@ -227,6 +228,12 @@ pub fn default_thead_produces_html_test() {
   let c = components.default()
   let result = c.thead([element.text("header")])
   assert element.to_string(result) == "<thead>header</thead>"
+}
+
+pub fn default_tbody_produces_html_test() {
+  let c = components.default()
+  let result = c.tbody([element.text("body")])
+  assert element.to_string(result) == "<tbody>body</tbody>"
 }
 
 pub fn default_td_left_produces_html_test() {
@@ -521,6 +528,16 @@ pub fn table_setter_overrides_default_test() {
     })
   let result = c.table([element.text("content")])
   assert element.to_string(result) == "<table class=\"data\">content</table>"
+}
+
+pub fn tbody_setter_overrides_default_test() {
+  let c =
+    components.default()
+    |> components.tbody(fn(children) {
+      html.tbody([attribute.class("body")], children)
+    })
+  let result = c.tbody([element.text("rows")])
+  assert element.to_string(result) == "<tbody class=\"body\">rows</tbody>"
 }
 
 pub fn td_setter_overrides_default_test() {
