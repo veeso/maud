@@ -21,9 +21,7 @@ pub fn render_blocks(
   document: Document,
   components: Components(a),
 ) -> List(Element(a)) {
-  list.map(blocks, fn(block) {
-    render_block(block, document, components, document.Loose)
-  })
+  list.map(blocks, render_block(_, document, components, document.Loose))
 }
 
 /// Render footnotes at the end of the document, sorted by their reference key.
@@ -40,7 +38,7 @@ pub fn footnote(
   |> list.sort(fn(a, b) { string.compare(a.0, b.0) })
   |> list.map(fn(tup) { tup.1 })
   |> list.flat_map(fn(doc) { render_blocks(doc.blocks, document, components) })
-  |> fn(footnotes) { list.append(acc, footnotes) }
+  |> list.append(acc, _)
 }
 
 /// Render a single block into a Lustre element using the appropriate component function from `Components(a)`.
