@@ -15,10 +15,11 @@
 //// // Override specific components via piping
 //// let c =
 ////   components.default()
-////   |> components.h1(fn(_id, children) { html.h1([attribute.class("title")], children) })
-////   |> components.p(fn(children) { html.p([attribute.class("body")], children) })
+////   |> components.h1(fn(_attributes, _id, children) { html.h1([attribute.class("title")], children) })
+////   |> components.p(fn(_attributes, children) { html.p([attribute.class("body")], children) })
 //// ```
 
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -42,28 +43,37 @@ pub type Alignment {
 /// to the parent component function as a `List(Element(a))`. When implementing
 /// a custom component, you must pass the children into the element you return,
 /// otherwise they will not appear in the output.
+///
+/// Components for every element that can carry author-supplied attributes
+/// (`a`, `blockquote`, `code`, `h1`–`h6`, `img`, `p`, `pre`) receive a
+/// `Dict(String, String)` of those attributes as their first argument. These
+/// are the annotations (for example a class or key/value pair) attached to the
+/// element in the source document, letting a component react to per-element
+/// styling instead of resorting to content sniffing.
 pub type Components(a) {
   Components(
-    a: fn(String, Option(String), List(Element(a))) -> Element(a),
-    blockquote: fn(List(Element(a))) -> Element(a),
+    a: fn(Dict(String, String), String, Option(String), List(Element(a))) ->
+      Element(a),
+    blockquote: fn(Dict(String, String), List(Element(a))) -> Element(a),
     checkbox: fn(Bool) -> Element(a),
-    code: fn(Option(String), List(Element(a))) -> Element(a),
+    code: fn(Dict(String, String), Option(String), List(Element(a))) ->
+      Element(a),
     del: fn(List(Element(a))) -> Element(a),
     em: fn(List(Element(a))) -> Element(a),
     footnote: fn(Int, List(Element(a))) -> Element(a),
-    h1: fn(String, List(Element(a))) -> Element(a),
-    h2: fn(String, List(Element(a))) -> Element(a),
-    h3: fn(String, List(Element(a))) -> Element(a),
-    h4: fn(String, List(Element(a))) -> Element(a),
-    h5: fn(String, List(Element(a))) -> Element(a),
-    h6: fn(String, List(Element(a))) -> Element(a),
+    h1: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
+    h2: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
+    h3: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
+    h4: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
+    h5: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
+    h6: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
     hr: fn() -> Element(a),
-    img: fn(String, String, Option(String)) -> Element(a),
+    img: fn(Dict(String, String), String, String, Option(String)) -> Element(a),
     li: fn(List(Element(a))) -> Element(a),
     mark: fn(List(Element(a))) -> Element(a),
     ol: fn(Option(Int), List(Element(a))) -> Element(a),
-    p: fn(List(Element(a))) -> Element(a),
-    pre: fn(List(Element(a))) -> Element(a),
+    p: fn(Dict(String, String), List(Element(a))) -> Element(a),
+    pre: fn(Dict(String, String), List(Element(a))) -> Element(a),
     strong: fn(List(Element(a))) -> Element(a),
     table: fn(List(Element(a))) -> Element(a),
     tbody: fn(List(Element(a))) -> Element(a),
@@ -85,14 +95,15 @@ pub type Components(a) {
 /// ```
 pub fn default() -> Components(a) {
   Components(
-    a: fn(href, title, children) {
+    a: fn(attributes, href, title, children) {
       let title_attr = case title {
         Some(t) -> [attribute.title(t)]
         None -> []
       }
-      html.a([attribute.href(href), ..title_attr], children)
+      let attrs = dict_to_attributes(attributes)
+      html.a([attribute.href(href), ..list.append(title_attr, attrs)], children)
     },
-    blockquote: default_view(html.blockquote),
+    blockquote: attributed_view(html.blockquote),
     checkbox: fn(checked) {
       let attrs = case checked {
         True -> [
@@ -104,11 +115,12 @@ pub fn default() -> Components(a) {
       }
       html.input(attrs)
     },
-    code: fn(language, children) {
+    code: fn(attributes, language, children) {
+      let attrs = dict_to_attributes(attributes)
       case language {
         Some(lang) ->
-          html.code([attribute.class("language-" <> lang)], children)
-        None -> html.code([], children)
+          html.code([attribute.class("language-" <> lang), ..attrs], children)
+        None -> html.code(attrs, children)
       }
     },
     del: default_view(html.del),
@@ -125,7 +137,7 @@ pub fn default() -> Components(a) {
     h5: heading_view(html.h5),
     h6: heading_view(html.h6),
     hr: fn() { html.hr([]) },
-    img: fn(uri, alt, title) {
+    img: fn(attributes, uri, alt, title) {
       let alt_attr = case alt {
         "" -> []
         _ -> [attribute.alt(alt)]
@@ -134,7 +146,14 @@ pub fn default() -> Components(a) {
         Some(t) -> [attribute.title(t)]
         None -> []
       }
-      html.img(list.flatten([[attribute.src(uri)], alt_attr, title_attr]))
+      html.img(
+        list.flatten([
+          [attribute.src(uri)],
+          alt_attr,
+          title_attr,
+          dict_to_attributes(attributes),
+        ]),
+      )
     },
     li: default_view(html.li),
     mark: default_view(html.mark),
@@ -145,8 +164,8 @@ pub fn default() -> Components(a) {
         None -> html.ol([], children)
       }
     },
-    p: default_view(html.p),
-    pre: default_view(html.pre),
+    p: attributed_view(html.p),
+    pre: attributed_view(html.pre),
     strong: default_view(html.strong),
     table: default_view(html.table),
     tbody: default_view(html.tbody),
@@ -160,37 +179,42 @@ pub fn default() -> Components(a) {
 
 /// Set the `a` component used for links.
 ///
-/// The first argument is the link href, the second is an optional title,
-/// and the third is the list of children elements.
+/// The first argument is the link's attributes, the second is the link href,
+/// the third is an optional title, and the fourth is the list of children
+/// elements.
 ///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.a(fn(href, _title, children) {
+/// |> components.a(fn(_attributes, href, _title, children) {
 ///   html.a([attribute.href(href), attribute.class("link")], children)
 /// })
 /// ```
 pub fn a(
   components: Components(a),
-  view: fn(String, Option(String), List(Element(a))) -> Element(a),
+  view: fn(Dict(String, String), String, Option(String), List(Element(a))) ->
+    Element(a),
 ) -> Components(a) {
   Components(..components, a: view)
 }
 
 /// Set the `blockquote` component used for block quotes.
 ///
+/// The first argument is the blockquote's attributes, the second is the list of
+/// children elements.
+///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.blockquote(fn(children) {
+/// |> components.blockquote(fn(_attributes, children) {
 ///   html.blockquote([attribute.class("quote")], children)
 /// })
 /// ```
 pub fn blockquote(
   components: Components(a),
-  blockquote: fn(List(Element(a))) -> Element(a),
+  blockquote: fn(Dict(String, String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, blockquote: blockquote)
 }
@@ -207,14 +231,16 @@ pub fn checkbox(
 
 /// Set the `code` component used for inline code and code blocks.
 ///
-/// The first argument is the optional language identifier (e.g. `Some("gleam")`
-/// for fenced code blocks with a language tag, `None` for inline code).
+/// The first argument is the code's attributes (only fenced code blocks carry
+/// these; inline code receives an empty dictionary). The second argument is the
+/// optional language identifier (e.g. `Some("gleam")` for fenced code blocks
+/// with a language tag, `None` for inline code). The third is the children.
 ///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.code(fn(language, children) {
+/// |> components.code(fn(_attributes, language, children) {
 ///   case language {
 ///     option.Some(lang) ->
 ///       html.code([attribute.class("lang-" <> lang)], children)
@@ -224,7 +250,7 @@ pub fn checkbox(
 /// ```
 pub fn code(
   components: Components(a),
-  code: fn(Option(String), List(Element(a))) -> Element(a),
+  code: fn(Dict(String, String), Option(String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, code: code)
 }
@@ -269,69 +295,75 @@ pub fn footnote(
 
 /// Set the `h1` component used for level 1 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 ///
 /// ## Examples
 ///
 /// ```gleam
 /// components.default()
-/// |> components.h1(fn(id, children) {
+/// |> components.h1(fn(_attributes, id, children) {
 ///   html.h1([attribute.id(id), attribute.class("heading")], children)
 /// })
 /// ```
 pub fn h1(
   components: Components(a),
-  h1: fn(String, List(Element(a))) -> Element(a),
+  h1: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h1: h1)
 }
 
 /// Set the `h2` component used for level 2 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 pub fn h2(
   components: Components(a),
-  h2: fn(String, List(Element(a))) -> Element(a),
+  h2: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h2: h2)
 }
 
 /// Set the `h3` component used for level 3 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 pub fn h3(
   components: Components(a),
-  h3: fn(String, List(Element(a))) -> Element(a),
+  h3: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h3: h3)
 }
 
 /// Set the `h4` component used for level 4 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 pub fn h4(
   components: Components(a),
-  h4: fn(String, List(Element(a))) -> Element(a),
+  h4: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h4: h4)
 }
 
 /// Set the `h5` component used for level 5 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 pub fn h5(
   components: Components(a),
-  h5: fn(String, List(Element(a))) -> Element(a),
+  h5: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h5: h5)
 }
 
 /// Set the `h6` component used for level 6 headings.
 ///
-/// The first argument is the heading id, the second is the children elements.
+/// The first argument is the heading's attributes, the second is the heading id,
+/// the third is the children elements.
 pub fn h6(
   components: Components(a),
-  h6: fn(String, List(Element(a))) -> Element(a),
+  h6: fn(Dict(String, String), String, List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, h6: h6)
 }
@@ -343,12 +375,12 @@ pub fn hr(components: Components(a), hr: fn() -> Element(a)) -> Components(a) {
 
 /// Set the `img` component used for images.
 ///
-/// The first argument is the image URI, the second is the alt text
-/// extracted from the image's inline content, and the third is an
-/// optional title.
+/// The first argument is the image's attributes, the second is the image URI,
+/// the third is the alt text extracted from the image's inline content, and the
+/// fourth is an optional title.
 pub fn img(
   components: Components(a),
-  img: fn(String, String, Option(String)) -> Element(a),
+  img: fn(Dict(String, String), String, String, Option(String)) -> Element(a),
 ) -> Components(a) {
   Components(..components, img: img)
 }
@@ -381,17 +413,23 @@ pub fn ol(
 }
 
 /// Set the `p` component used for paragraphs.
+///
+/// The first argument is the paragraph's attributes, the second is the list of
+/// children elements.
 pub fn p(
   components: Components(a),
-  p: fn(List(Element(a))) -> Element(a),
+  p: fn(Dict(String, String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, p: p)
 }
 
 /// Set the `pre` component used for preformatted code blocks.
+///
+/// The first argument is the code block's attributes, the second is the list of
+/// children elements.
 pub fn pre(
   components: Components(a),
-  pre: fn(List(Element(a))) -> Element(a),
+  pre: fn(Dict(String, String), List(Element(a))) -> Element(a),
 ) -> Components(a) {
   Components(..components, pre: pre)
 }
@@ -474,17 +512,35 @@ fn default_view(
   fn(children) { view([], children) }
 }
 
+// A default view function for elements that carry author-supplied attributes.
+// It takes a view function that expects attributes and children, and returns a
+// view function that expects an attribute dictionary and children, rendering
+// the attributes onto the element.
+fn attributed_view(
+  view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
+) -> fn(Dict(String, String), List(Element(a))) -> Element(a) {
+  fn(attributes, children) { view(dict_to_attributes(attributes), children) }
+}
+
 // A default heading view function which takes a view function that expects attributes and children,
-// and returns a view function that expects an id and children.
+// and returns a view function that expects an attribute dictionary, an id and children.
 fn heading_view(
   view: fn(List(Attribute(a)), List(Element(a))) -> Element(a),
-) -> fn(String, List(Element(a))) -> Element(a) {
-  fn(id, children) {
+) -> fn(Dict(String, String), String, List(Element(a))) -> Element(a) {
+  fn(attributes, id, children) {
+    let attrs = dict_to_attributes(attributes)
     case id {
-      "" -> view([], children)
-      _ -> view([attribute.id(id)], children)
+      "" -> view(attrs, children)
+      _ -> view([attribute.id(id), ..attrs], children)
     }
   }
+}
+
+// Convert an attribute dictionary into a list of Lustre attributes.
+fn dict_to_attributes(attributes: Dict(String, String)) -> List(Attribute(a)) {
+  attributes
+  |> dict.to_list()
+  |> list.map(fn(pair) { attribute.attribute(pair.0, pair.1) })
 }
 
 // A default table cell view function which takes a view function that expects

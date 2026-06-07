@@ -37,10 +37,10 @@
 ////
 //// let my_components =
 ////   components.default()
-////   |> components.h1(fn(_id, children) {
+////   |> components.h1(fn(_attributes, _id, children) {
 ////     html.h1([attribute.class("text-4xl font-bold")], children)
 ////   })
-////   |> components.p(fn(children) {
+////   |> components.p(fn(_attributes, children) {
 ////     html.p([attribute.class("leading-relaxed")], children)
 ////   })
 ////
