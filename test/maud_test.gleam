@@ -289,7 +289,9 @@ pub fn render_list_with_inline_formatting_test() {
 pub fn render_markdown_with_custom_component_test() {
   let custom_components =
     components.default()
-    |> components.p(fn(children) { element.element("div", [], children) })
+    |> components.p(fn(_attributes, children) {
+      element.element("div", [], children)
+    })
 
   let result =
     maud.render_markdown("Hello", default_options(), custom_components)

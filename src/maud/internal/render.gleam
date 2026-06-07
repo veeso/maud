@@ -93,7 +93,7 @@ fn render_inline(
     document.Autolink(uri: uri, text: text) ->
       render_autolink(uri, text, components)
     document.CodeSpan(text) ->
-      components.code(option.None, [element.text(text)])
+      components.code(dict.new(), option.None, [element.text(text)])
     document.EmailAutolink(mail: email) ->
       render_autolink("mailto:" <> email, option.Some(email), components)
     document.Emphasis(inlines) -> render_emphasis(inlines, document, components)
@@ -158,7 +158,7 @@ fn render_a(
   let href = src(link_data.dest)
   inlines
   |> render_inlines(document, components)
-  |> fn(children) { components.a(href, link_data.title, children) }
+  |> fn(children) { components.a(dict.new(), href, link_data.title, children) }
 }
 
 /// Render an autolink by using the URI as the href and the optional text as the link text, passing them to the `a` component function.
@@ -167,7 +167,7 @@ fn render_autolink(
   text: Option(String),
   components: Components(a),
 ) -> Element(a) {
-  components.a(uri, option.None, [
+  components.a(dict.new(), uri, option.None, [
     element.text(option.unwrap(text, or: uri)),
   ])
 }
@@ -178,9 +178,11 @@ fn render_blockquote(
   document: Document,
   components: Components(a),
 ) -> Element(a) {
-  blocks
-  |> render_blocks(document, components)
-  |> components.blockquote()
+  // Mork's CommonMark `Block` type does not carry block attributes, so an empty
+  // dictionary is passed. The argument exists so callers relying on attributes
+  // (e.g. a Djot-based pipeline) share the same `Components` shape.
+  let children = render_blocks(blocks, document, components)
+  components.blockquote(dict.new(), children)
 }
 
 /// Render a checkbox inline by passing the checked state to the `checkbox` component function.
@@ -217,13 +219,15 @@ fn render_heading(
   components: Components(a),
 ) -> Element(a) {
   let children = render_inlines(inlines, document, components)
+  // Mork does not expose heading attributes, so an empty dictionary is passed.
+  let attributes = dict.new()
   case level {
-    1 -> components.h1(id, children)
-    2 -> components.h2(id, children)
-    3 -> components.h3(id, children)
-    4 -> components.h4(id, children)
-    5 -> components.h5(id, children)
-    _ -> components.h6(id, children)
+    1 -> components.h1(attributes, id, children)
+    2 -> components.h2(attributes, id, children)
+    3 -> components.h3(attributes, id, children)
+    4 -> components.h4(attributes, id, children)
+    5 -> components.h5(attributes, id, children)
+    _ -> components.h6(attributes, id, children)
   }
 }
 
@@ -248,7 +252,7 @@ fn render_img(
 ) -> Element(a) {
   let uri = src(link_data.dest)
   let alt = inlines_to_text(inlines)
-  components.img(uri, alt, link_data.title)
+  components.img(dict.new(), uri, alt, link_data.title)
 }
 
 /// Render an inline HTML element by creating a Lustre element with the given tag, attributes, and children.
@@ -294,7 +298,7 @@ fn render_paragraph(
   let text = render_inlines(inlines, document, components)
   case pack {
     document.Tight -> element.fragment(text)
-    document.Loose -> components.p(text)
+    document.Loose -> components.p(dict.new(), text)
   }
 }
 
@@ -304,7 +308,9 @@ fn render_pre(
   text: String,
   components: Components(a),
 ) -> Element(a) {
-  components.pre([components.code(language, [element.text(text)])])
+  components.pre(dict.new(), [
+    components.code(dict.new(), language, [element.text(text)]),
+  ])
 }
 
 /// Render a strikethrough inline by rendering its child inlines and passing them to the `del` component function.

@@ -1,5 +1,6 @@
 //// Tests for the maud/components module: default components and setter functions.
 
+import gleam/dict
 import gleam/int
 import gleam/option
 import lustre/attribute
@@ -15,26 +16,26 @@ pub fn default_returns_components_test() {
   let children = [element.text("test")]
 
   // Each component should produce a valid element without crashing.
-  let _ = c.p(children)
-  let _ = c.h1("heading-1", children)
-  let _ = c.h2("heading-2", children)
-  let _ = c.h3("heading-3", children)
-  let _ = c.h4("heading-4", children)
-  let _ = c.h5("heading-5", children)
-  let _ = c.h6("heading-6", children)
-  let _ = c.a("https://example.com", option.None, children)
-  let _ = c.blockquote(children)
+  let _ = c.p(dict.new(), children)
+  let _ = c.h1(dict.new(), "heading-1", children)
+  let _ = c.h2(dict.new(), "heading-2", children)
+  let _ = c.h3(dict.new(), "heading-3", children)
+  let _ = c.h4(dict.new(), "heading-4", children)
+  let _ = c.h5(dict.new(), "heading-5", children)
+  let _ = c.h6(dict.new(), "heading-6", children)
+  let _ = c.a(dict.new(), "https://example.com", option.None, children)
+  let _ = c.blockquote(dict.new(), children)
   let _ = c.checkbox(True)
-  let _ = c.code(option.None, children)
+  let _ = c.code(dict.new(), option.None, children)
   let _ = c.del(children)
   let _ = c.em(children)
   let _ = c.footnote(1, children)
-  let _ = c.img("https://example.com/img.png", "alt", option.None)
+  let _ = c.img(dict.new(), "https://example.com/img.png", "alt", option.None)
   let _ = c.li(children)
   let _ = c.mark(children)
   let _ = c.ol(option.None, children)
   let _ = c.ul(children)
-  let _ = c.pre(children)
+  let _ = c.pre(dict.new(), children)
   let _ = c.strong(children)
   let _ = c.table(children)
   let _ = c.tbody(children)
@@ -50,56 +51,59 @@ pub fn default_returns_components_test() {
 
 pub fn default_p_produces_html_test() {
   let c = components.default()
-  let result = c.p([element.text("hello")])
+  let result = c.p(dict.new(), [element.text("hello")])
   assert element.to_string(result) == "<p>hello</p>"
 }
 
 pub fn default_h1_produces_html_test() {
   let c = components.default()
-  let result = c.h1("heading-1", [element.text("title")])
+  let result = c.h1(dict.new(), "heading-1", [element.text("title")])
   assert element.to_string(result) == "<h1 id=\"heading-1\">title</h1>"
 }
 
 pub fn default_h2_produces_html_test() {
   let c = components.default()
-  let result = c.h2("heading-2", [element.text("title")])
+  let result = c.h2(dict.new(), "heading-2", [element.text("title")])
   assert element.to_string(result) == "<h2 id=\"heading-2\">title</h2>"
 }
 
 pub fn default_h3_produces_html_test() {
   let c = components.default()
-  let result = c.h3("heading-3", [element.text("title")])
+  let result = c.h3(dict.new(), "heading-3", [element.text("title")])
   assert element.to_string(result) == "<h3 id=\"heading-3\">title</h3>"
 }
 
 pub fn default_h4_produces_html_test() {
   let c = components.default()
-  let result = c.h4("heading-4", [element.text("title")])
+  let result = c.h4(dict.new(), "heading-4", [element.text("title")])
   assert element.to_string(result) == "<h4 id=\"heading-4\">title</h4>"
 }
 
 pub fn default_h5_produces_html_test() {
   let c = components.default()
-  let result = c.h5("heading-5", [element.text("title")])
+  let result = c.h5(dict.new(), "heading-5", [element.text("title")])
   assert element.to_string(result) == "<h5 id=\"heading-5\">title</h5>"
 }
 
 pub fn default_h6_produces_html_test() {
   let c = components.default()
-  let result = c.h6("heading-6", [element.text("title")])
+  let result = c.h6(dict.new(), "heading-6", [element.text("title")])
   assert element.to_string(result) == "<h6 id=\"heading-6\">title</h6>"
 }
 
 pub fn default_a_produces_html_without_title_test() {
   let c = components.default()
-  let result = c.a("https://example.com", option.None, [element.text("link")])
+  let result =
+    c.a(dict.new(), "https://example.com", option.None, [element.text("link")])
   assert element.to_string(result) == "<a href=\"https://example.com\">link</a>"
 }
 
 pub fn default_a_produces_html_with_title_test() {
   let c = components.default()
   let result =
-    c.a("https://example.com", option.Some("Example"), [element.text("link")])
+    c.a(dict.new(), "https://example.com", option.Some("Example"), [
+      element.text("link"),
+    ])
   assert element.to_string(result)
     == "<a href=\"https://example.com\" title=\"Example\">link</a>"
 }
@@ -130,26 +134,26 @@ pub fn default_del_produces_html_test() {
 
 pub fn default_code_produces_html_without_language_test() {
   let c = components.default()
-  let result = c.code(option.None, [element.text("code")])
+  let result = c.code(dict.new(), option.None, [element.text("code")])
   assert element.to_string(result) == "<code>code</code>"
 }
 
 pub fn default_code_produces_html_with_language_test() {
   let c = components.default()
-  let result = c.code(option.Some("gleam"), [element.text("code")])
+  let result = c.code(dict.new(), option.Some("gleam"), [element.text("code")])
   assert element.to_string(result)
     == "<code class=\"language-gleam\">code</code>"
 }
 
 pub fn default_pre_produces_html_test() {
   let c = components.default()
-  let result = c.pre([element.text("preformatted")])
+  let result = c.pre(dict.new(), [element.text("preformatted")])
   assert element.to_string(result) == "<pre>preformatted</pre>"
 }
 
 pub fn default_blockquote_produces_html_test() {
   let c = components.default()
-  let result = c.blockquote([element.text("quote")])
+  let result = c.blockquote(dict.new(), [element.text("quote")])
   assert element.to_string(result) == "<blockquote>quote</blockquote>"
 }
 
@@ -269,7 +273,7 @@ pub fn default_hr_produces_html_test() {
 
 pub fn default_img_produces_html_without_alt_test() {
   let c = components.default()
-  let result = c.img("https://example.com/img.png", "", option.None)
+  let result = c.img(dict.new(), "https://example.com/img.png", "", option.None)
   assert element.to_string(result)
     == "<img src=\"https://example.com/img.png\">"
 }
@@ -277,7 +281,12 @@ pub fn default_img_produces_html_without_alt_test() {
 pub fn default_img_produces_html_with_alt_test() {
   let c = components.default()
   let result =
-    c.img("https://example.com/img.png", "An example image", option.None)
+    c.img(
+      dict.new(),
+      "https://example.com/img.png",
+      "An example image",
+      option.None,
+    )
   assert element.to_string(result)
     == "<img alt=\"An example image\" src=\"https://example.com/img.png\">"
 }
@@ -286,6 +295,7 @@ pub fn default_img_produces_html_with_alt_and_title_test() {
   let c = components.default()
   let result =
     c.img(
+      dict.new(),
       "https://example.com/img.png",
       "An example image",
       option.Some("Image Title"),
@@ -294,15 +304,88 @@ pub fn default_img_produces_html_with_alt_and_title_test() {
     == "<img alt=\"An example image\" src=\"https://example.com/img.png\" title=\"Image Title\">"
 }
 
+// --- Attribute threading tests ---
+
+pub fn default_p_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.p(dict.from_list([#("class", "drop")]), [element.text("hello")])
+  assert element.to_string(result) == "<p class=\"drop\">hello</p>"
+}
+
+pub fn default_blockquote_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.blockquote(dict.from_list([#("class", "pull")]), [element.text("quote")])
+  assert element.to_string(result)
+    == "<blockquote class=\"pull\">quote</blockquote>"
+}
+
+pub fn default_h1_renders_attributes_with_id_test() {
+  let c = components.default()
+  let result =
+    c.h1(dict.from_list([#("class", "title")]), "heading-1", [
+      element.text("title"),
+    ])
+  assert element.to_string(result)
+    == "<h1 class=\"title\" id=\"heading-1\">title</h1>"
+}
+
+pub fn default_code_block_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.code(dict.from_list([#("data-line", "3")]), option.Some("gleam"), [
+      element.text("code"),
+    ])
+  assert element.to_string(result)
+    == "<code class=\"language-gleam\" data-line=\"3\">code</code>"
+}
+
+pub fn default_pre_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.pre(dict.from_list([#("class", "code-block")]), [element.text("x")])
+  assert element.to_string(result) == "<pre class=\"code-block\">x</pre>"
+}
+
+pub fn default_a_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.a(
+      dict.from_list([#("class", "link")]),
+      "https://example.com",
+      option.None,
+      [
+        element.text("link"),
+      ],
+    )
+  assert element.to_string(result)
+    == "<a class=\"link\" href=\"https://example.com\">link</a>"
+}
+
+pub fn default_img_renders_attributes_test() {
+  let c = components.default()
+  let result =
+    c.img(
+      dict.from_list([#("class", "image")]),
+      "https://example.com/img.png",
+      "",
+      option.None,
+    )
+  assert element.to_string(result)
+    == "<img class=\"image\" src=\"https://example.com/img.png\">"
+}
+
 // --- Setter function tests ---
 
 pub fn a_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.a(fn(href, _title, children) {
+    |> components.a(fn(_attributes, href, _title, children) {
       html.a([attribute.class("custom-link"), attribute.href(href)], children)
     })
-  let result = c.a("https://example.com", option.None, [element.text("link")])
+  let result =
+    c.a(dict.new(), "https://example.com", option.None, [element.text("link")])
   assert element.to_string(result)
     == "<a class=\"custom-link\" href=\"https://example.com\">link</a>"
 }
@@ -310,10 +393,10 @@ pub fn a_setter_overrides_default_test() {
 pub fn blockquote_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.blockquote(fn(children) {
+    |> components.blockquote(fn(_attributes, children) {
       html.blockquote([attribute.class("quote")], children)
     })
-  let result = c.blockquote([element.text("text")])
+  let result = c.blockquote(dict.new(), [element.text("text")])
   assert element.to_string(result)
     == "<blockquote class=\"quote\">text</blockquote>"
 }
@@ -335,10 +418,10 @@ pub fn checkbox_setter_overrides_default_test() {
 pub fn code_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.code(fn(_language, children) {
+    |> components.code(fn(_attributes, _language, children) {
       html.code([attribute.class("highlight")], children)
     })
-  let result = c.code(option.None, [element.text("x")])
+  let result = c.code(dict.new(), option.None, [element.text("x")])
   assert element.to_string(result) == "<code class=\"highlight\">x</code>"
 }
 
@@ -355,60 +438,60 @@ pub fn del_setter_overrides_default_test() {
 pub fn h1_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h1(fn(_id, children) {
+    |> components.h1(fn(_attributes, _id, children) {
       html.h1([attribute.class("title")], children)
     })
-  let result = c.h1("heading-1", [element.text("heading")])
+  let result = c.h1(dict.new(), "heading-1", [element.text("heading")])
   assert element.to_string(result) == "<h1 class=\"title\">heading</h1>"
 }
 
 pub fn h2_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h2(fn(_id, children) {
+    |> components.h2(fn(_attributes, _id, children) {
       html.h2([attribute.class("subtitle")], children)
     })
-  let result = c.h2("heading-2", [element.text("heading")])
+  let result = c.h2(dict.new(), "heading-2", [element.text("heading")])
   assert element.to_string(result) == "<h2 class=\"subtitle\">heading</h2>"
 }
 
 pub fn h3_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h3(fn(_id, children) {
+    |> components.h3(fn(_attributes, _id, children) {
       html.h3([attribute.class("h3")], children)
     })
-  let result = c.h3("heading-3", [element.text("heading")])
+  let result = c.h3(dict.new(), "heading-3", [element.text("heading")])
   assert element.to_string(result) == "<h3 class=\"h3\">heading</h3>"
 }
 
 pub fn h4_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h4(fn(_id, children) {
+    |> components.h4(fn(_attributes, _id, children) {
       html.h4([attribute.class("h4")], children)
     })
-  let result = c.h4("heading-4", [element.text("heading")])
+  let result = c.h4(dict.new(), "heading-4", [element.text("heading")])
   assert element.to_string(result) == "<h4 class=\"h4\">heading</h4>"
 }
 
 pub fn h5_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h5(fn(_id, children) {
+    |> components.h5(fn(_attributes, _id, children) {
       html.h5([attribute.class("h5")], children)
     })
-  let result = c.h5("heading-5", [element.text("heading")])
+  let result = c.h5(dict.new(), "heading-5", [element.text("heading")])
   assert element.to_string(result) == "<h5 class=\"h5\">heading</h5>"
 }
 
 pub fn h6_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.h6(fn(_id, children) {
+    |> components.h6(fn(_attributes, _id, children) {
       html.h6([attribute.class("h6")], children)
     })
-  let result = c.h6("heading-6", [element.text("heading")])
+  let result = c.h6(dict.new(), "heading-6", [element.text("heading")])
   assert element.to_string(result) == "<h6 class=\"h6\">heading</h6>"
 }
 
@@ -443,10 +526,10 @@ pub fn footnote_setter_overrides_default_test() {
 pub fn img_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.img(fn(uri, _alt, _title) {
+    |> components.img(fn(_attributes, uri, _alt, _title) {
       html.img([attribute.src(uri), attribute.class("image")])
     })
-  let result = c.img("https://example.com/img.png", "", option.None)
+  let result = c.img(dict.new(), "https://example.com/img.png", "", option.None)
   assert element.to_string(result)
     == "<img class=\"image\" src=\"https://example.com/img.png\">"
 }
@@ -484,18 +567,20 @@ pub fn ol_setter_overrides_default_test() {
 pub fn p_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.p(fn(children) { html.p([attribute.class("body")], children) })
-  let result = c.p([element.text("text")])
+    |> components.p(fn(_attributes, children) {
+      html.p([attribute.class("body")], children)
+    })
+  let result = c.p(dict.new(), [element.text("text")])
   assert element.to_string(result) == "<p class=\"body\">text</p>"
 }
 
 pub fn pre_setter_overrides_default_test() {
   let c =
     components.default()
-    |> components.pre(fn(children) {
+    |> components.pre(fn(_attributes, children) {
       html.pre([attribute.class("code-block")], children)
     })
-  let result = c.pre([element.text("code")])
+  let result = c.pre(dict.new(), [element.text("code")])
   assert element.to_string(result) == "<pre class=\"code-block\">code</pre>"
 }
 
@@ -584,20 +669,20 @@ pub fn ul_setter_overrides_default_test() {
 pub fn chained_setters_override_multiple_components_test() {
   let c =
     components.default()
-    |> components.h1(fn(_id, children) {
+    |> components.h1(fn(_attributes, _id, children) {
       html.h1([attribute.class("heading")], children)
     })
-    |> components.p(fn(children) {
+    |> components.p(fn(_attributes, children) {
       html.p([attribute.class("paragraph")], children)
     })
     |> components.strong(fn(children) {
       html.strong([attribute.class("bold")], children)
     })
 
-  let h1_result = c.h1("heading-1", [element.text("title")])
+  let h1_result = c.h1(dict.new(), "heading-1", [element.text("title")])
   assert element.to_string(h1_result) == "<h1 class=\"heading\">title</h1>"
 
-  let p_result = c.p([element.text("text")])
+  let p_result = c.p(dict.new(), [element.text("text")])
   assert element.to_string(p_result) == "<p class=\"paragraph\">text</p>"
 
   let strong_result = c.strong([element.text("bold")])
@@ -608,16 +693,16 @@ pub fn chained_setters_override_multiple_components_test() {
 pub fn setter_does_not_affect_other_components_test() {
   let c =
     components.default()
-    |> components.h1(fn(_id, children) {
+    |> components.h1(fn(_attributes, _id, children) {
       html.h1([attribute.class("custom")], children)
     })
 
   // h1 is customized
-  let h1_result = c.h1("heading-1", [element.text("heading")])
+  let h1_result = c.h1(dict.new(), "heading-1", [element.text("heading")])
   assert element.to_string(h1_result) == "<h1 class=\"custom\">heading</h1>"
 
   // h2 remains default
-  let h2_result = c.h2("heading-2", [element.text("heading")])
+  let h2_result = c.h2(dict.new(), "heading-2", [element.text("heading")])
   assert element.to_string(h2_result) == "<h2 id=\"heading-2\">heading</h2>"
 }
 
@@ -626,10 +711,10 @@ pub fn setter_does_not_affect_other_components_test() {
 pub fn setter_allows_different_element_type_test() {
   let c =
     components.default()
-    |> components.p(fn(children) {
+    |> components.p(fn(_attributes, children) {
       // Use a <div> instead of <p>
       html.div([], children)
     })
-  let result = c.p([element.text("content")])
+  let result = c.p(dict.new(), [element.text("content")])
   assert element.to_string(result) == "<div>content</div>"
 }
